@@ -1,9 +1,25 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { Plus, Edit3, Trash2, X, Upload, Calendar, MapPin, Tag, Image, LogOut, LayoutDashboard, AlertCircle, Eye, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  Plus,
+  Edit3,
+  Trash2,
+  X,
+  Upload,
+  Calendar,
+  MapPin,
+  Tag,
+  Image,
+  LogOut,
+  LayoutDashboard,
+  AlertCircle,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
-const API_URL = 'http://localhost:5000/api'
+import { API_URL, getImageUrl } from '../config/api'
 
 const AdminDashboard = () => {
   const { admin, token, logout } = useAuth()
@@ -71,7 +87,7 @@ const AdminDashboard = () => {
       kategori: item.kategori || 'kegiatan',
     })
     setImageFile(null)
-    setImagePreview(item.gambar ? `http://localhost:5000${item.gambar}` : null)
+    setImagePreview(item.gambar ? getImageUrl(item.gambar) : null)
     setShowModal(true)
   }
 
@@ -98,9 +114,7 @@ const AdminDashboard = () => {
         data.append('gambar', imageFile)
       }
 
-      const url = editingItem
-        ? `${API_URL}/kegiatan/${editingItem.id}`
-        : `${API_URL}/kegiatan`
+      const url = editingItem ? `${API_URL}/kegiatan/${editingItem.id}` : `${API_URL}/kegiatan`
 
       const res = await fetch(url, {
         method: editingItem ? 'PUT' : 'POST',
@@ -109,7 +123,9 @@ const AdminDashboard = () => {
       })
 
       if (res.ok) {
-        showMessage(editingItem ? 'Kegiatan berhasil diperbarui!' : 'Kegiatan berhasil ditambahkan!')
+        showMessage(
+          editingItem ? 'Kegiatan berhasil diperbarui!' : 'Kegiatan berhasil ditambahkan!'
+        )
         setShowModal(false)
         fetchKegiatan()
       } else {
@@ -182,7 +198,9 @@ const AdminDashboard = () => {
               <LayoutDashboard className="text-primary" size={24} />
               <div>
                 <h1 className="text-xl font-bold text-text-heading">Admin Dashboard</h1>
-                <p className="text-sm text-text-muted">Selamat datang, {admin?.nama || admin?.username}</p>
+                <p className="text-sm text-text-muted">
+                  Selamat datang, {admin?.nama || admin?.username}
+                </p>
               </div>
             </div>
             <button
@@ -199,11 +217,13 @@ const AdminDashboard = () => {
       {/* Message */}
       {message.text && (
         <div className="container-custom mt-4">
-          <div className={`p-4 rounded-xl text-sm font-medium ${
-            message.type === 'error'
-              ? 'bg-red-500/10 border border-red-500/30 text-red-400'
-              : 'bg-green-500/10 border border-green-500/30 text-green-400'
-          }`}>
+          <div
+            className={`p-4 rounded-xl text-sm font-medium ${
+              message.type === 'error'
+                ? 'bg-red-500/10 border border-red-500/30 text-red-400'
+                : 'bg-green-500/10 border border-green-500/30 text-green-400'
+            }`}
+          >
             {message.text}
           </div>
         </div>
@@ -215,7 +235,9 @@ const AdminDashboard = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-2xl font-bold text-text-heading">Kelola Kegiatan</h2>
-            <p className="text-text-body text-sm mt-1">Tambah, edit, atau hapus dokumentasi kegiatan</p>
+            <p className="text-text-body text-sm mt-1">
+              Tambah, edit, atau hapus dokumentasi kegiatan
+            </p>
           </div>
           <button
             onClick={openCreateModal}
@@ -235,129 +257,135 @@ const AdminDashboard = () => {
           <div className="text-center py-20">
             <Image className="mx-auto text-text-muted mb-4" size={48} />
             <p className="text-text-body text-lg">Belum ada kegiatan</p>
-            <p className="text-text-muted text-sm mt-1">Klik tombol "Tambah Kegiatan" untuk menambahkan</p>
+            <p className="text-text-muted text-sm mt-1">
+              Klik tombol "Tambah Kegiatan" untuk menambahkan
+            </p>
           </div>
         ) : (
           <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {paginatedKegiatan.map((item) => (
-              <div
-                key={item.id}
-                className="bg-dark-50/80 rounded-2xl border border-dark-200/50 overflow-hidden group hover:border-primary/30 transition-all duration-300"
-              >
-                {/* Image */}
-                <div className="relative h-48 bg-dark-200/30">
-                  {item.gambar ? (
-                    <img
-                      src={`http://localhost:5000${item.gambar}`}
-                      alt={item.judul}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Image className="text-text-muted" size={40} />
-                    </div>
-                  )}
-                  <div className="absolute top-3 right-3">
-                    <span className="px-3 py-1 bg-primary/80 text-white text-xs font-medium rounded-full">
-                      {kategoriLabel[item.kategori] || item.kategori}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Info */}
-                <div className="p-5">
-                  <h3 className="text-lg font-bold text-text-heading mb-2 line-clamp-1">{item.judul}</h3>
-                  {item.deskripsi && (
-                    <p className="text-text-body text-sm mb-3 line-clamp-2">{item.deskripsi}</p>
-                  )}
-                  <div className="flex flex-wrap gap-3 text-xs text-text-muted mb-4">
-                    {item.tanggal && (
-                      <span className="flex items-center space-x-1">
-                        <Calendar size={12} />
-                        <span>{new Date(item.tanggal).toLocaleDateString('id-ID')}</span>
-                      </span>
-                    )}
-                    {item.lokasi && (
-                      <span className="flex items-center space-x-1">
-                        <MapPin size={12} />
-                        <span>{item.lokasi}</span>
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setDetailItem(item)}
-                      className="flex-1 flex items-center justify-center space-x-1 py-2 bg-blue-500/10 text-blue-400 border border-blue-500/30 rounded-xl hover:bg-blue-500/20 transition-all text-sm font-medium"
-                    >
-                      <Eye size={14} />
-                      <span>Lihat</span>
-                    </button>
-                    <button
-                      onClick={() => openEditModal(item)}
-                      className="flex-1 flex items-center justify-center space-x-1 py-2 bg-primary/10 text-primary border border-primary/30 rounded-xl hover:bg-primary/20 transition-all text-sm font-medium"
-                    >
-                      <Edit3 size={14} />
-                      <span>Edit</span>
-                    </button>
-                    <button
-                      onClick={() => setDeleteConfirm(item.id)}
-                      className="flex-1 flex items-center justify-center space-x-1 py-2 bg-red-500/10 text-red-400 border border-red-500/30 rounded-xl hover:bg-red-500/20 transition-all text-sm font-medium"
-                    >
-                      <Trash2 size={14} />
-                      <span>Hapus</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center mt-8 space-x-2">
-              <button
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="p-2 rounded-lg border border-dark-200/50 text-text-body hover:text-primary hover:border-primary/50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft size={20} />
-              </button>
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => goToPage(page)}
-                  className={`w-10 h-10 rounded-lg text-sm font-semibold transition-all ${
-                    currentPage === page
-                      ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg shadow-primary/25'
-                      : 'border border-dark-200/50 text-text-body hover:text-primary hover:border-primary/50'
-                  }`}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedKegiatan.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-dark-50/80 rounded-2xl border border-dark-200/50 overflow-hidden group hover:border-primary/30 transition-all duration-300"
                 >
-                  {page}
-                </button>
+                  {/* Image */}
+                  <div className="relative h-48 bg-dark-200/30">
+                    {item.gambar ? (
+                      <img
+                        src={getImageUrl(item.gambar)}
+                        alt={item.judul}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Image className="text-text-muted" size={40} />
+                      </div>
+                    )}
+                    <div className="absolute top-3 right-3">
+                      <span className="px-3 py-1 bg-primary/80 text-white text-xs font-medium rounded-full">
+                        {kategoriLabel[item.kategori] || item.kategori}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <div className="p-5">
+                    <h3 className="text-lg font-bold text-text-heading mb-2 line-clamp-1">
+                      {item.judul}
+                    </h3>
+                    {item.deskripsi && (
+                      <p className="text-text-body text-sm mb-3 line-clamp-2">{item.deskripsi}</p>
+                    )}
+                    <div className="flex flex-wrap gap-3 text-xs text-text-muted mb-4">
+                      {item.tanggal && (
+                        <span className="flex items-center space-x-1">
+                          <Calendar size={12} />
+                          <span>{new Date(item.tanggal).toLocaleDateString('id-ID')}</span>
+                        </span>
+                      )}
+                      {item.lokasi && (
+                        <span className="flex items-center space-x-1">
+                          <MapPin size={12} />
+                          <span>{item.lokasi}</span>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setDetailItem(item)}
+                        className="flex-1 flex items-center justify-center space-x-1 py-2 bg-blue-500/10 text-blue-400 border border-blue-500/30 rounded-xl hover:bg-blue-500/20 transition-all text-sm font-medium"
+                      >
+                        <Eye size={14} />
+                        <span>Lihat</span>
+                      </button>
+                      <button
+                        onClick={() => openEditModal(item)}
+                        className="flex-1 flex items-center justify-center space-x-1 py-2 bg-primary/10 text-primary border border-primary/30 rounded-xl hover:bg-primary/20 transition-all text-sm font-medium"
+                      >
+                        <Edit3 size={14} />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm(item.id)}
+                        className="flex-1 flex items-center justify-center space-x-1 py-2 bg-red-500/10 text-red-400 border border-red-500/30 rounded-xl hover:bg-red-500/20 transition-all text-sm font-medium"
+                      >
+                        <Trash2 size={14} />
+                        <span>Hapus</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               ))}
-
-              <button
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="p-2 rounded-lg border border-dark-200/50 text-text-body hover:text-primary hover:border-primary/50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <ChevronRight size={20} />
-              </button>
             </div>
-          )}
 
-          {/* Info total */}
-          {kegiatan.length > 0 && (
-            <div className="text-center mt-4">
-              <p className="text-text-muted text-sm">
-                Menampilkan {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, kegiatan.length)} dari {kegiatan.length} kegiatan
-              </p>
-            </div>
-          )}
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center mt-8 space-x-2">
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg border border-dark-200/50 text-text-body hover:text-primary hover:border-primary/50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    className={`w-10 h-10 rounded-lg text-sm font-semibold transition-all ${
+                      currentPage === page
+                        ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg shadow-primary/25'
+                        : 'border border-dark-200/50 text-text-body hover:text-primary hover:border-primary/50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-lg border border-dark-200/50 text-text-body hover:text-primary hover:border-primary/50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            )}
+
+            {/* Info total */}
+            {kegiatan.length > 0 && (
+              <div className="text-center mt-4">
+                <p className="text-text-muted text-sm">
+                  Menampilkan {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
+                  {Math.min(currentPage * ITEMS_PER_PAGE, kegiatan.length)} dari {kegiatan.length}{' '}
+                  kegiatan
+                </p>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -394,7 +422,9 @@ const AdminDashboard = () => {
 
               {/* Deskripsi */}
               <div>
-                <label className="block text-sm font-medium text-text-heading mb-2">Deskripsi</label>
+                <label className="block text-sm font-medium text-text-heading mb-2">
+                  Deskripsi
+                </label>
                 <textarea
                   value={formData.deskripsi}
                   onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })}
@@ -407,7 +437,9 @@ const AdminDashboard = () => {
               {/* Tanggal & Lokasi */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-text-heading mb-2">Tanggal</label>
+                  <label className="block text-sm font-medium text-text-heading mb-2">
+                    Tanggal
+                  </label>
                   <input
                     type="date"
                     value={formData.tanggal}
@@ -559,7 +591,7 @@ const AdminDashboard = () => {
             {/* Image */}
             {detailItem.gambar ? (
               <img
-                src={`http://localhost:5000${detailItem.gambar}`}
+                src={getImageUrl(detailItem.gambar)}
                 alt={detailItem.judul}
                 className="w-full h-64 md:h-80 object-cover rounded-t-2xl"
               />
@@ -576,9 +608,7 @@ const AdminDashboard = () => {
                 {kategoriLabel[detailItem.kategori] || detailItem.kategori}
               </span>
 
-              <h2 className="text-2xl font-bold text-text-heading mb-4">
-                {detailItem.judul}
-              </h2>
+              <h2 className="text-2xl font-bold text-text-heading mb-4">{detailItem.judul}</h2>
 
               <div className="flex flex-wrap gap-3 mb-5">
                 {detailItem.tanggal && (
@@ -606,14 +636,20 @@ const AdminDashboard = () => {
               {/* Admin Actions */}
               <div className="flex space-x-3 pt-4 border-t border-dark-200/30">
                 <button
-                  onClick={() => { setDetailItem(null); openEditModal(detailItem) }}
+                  onClick={() => {
+                    setDetailItem(null)
+                    openEditModal(detailItem)
+                  }}
                   className="flex-1 flex items-center justify-center space-x-2 py-3 bg-primary/10 text-primary border border-primary/30 rounded-xl hover:bg-primary/20 transition-all font-medium"
                 >
                   <Edit3 size={16} />
                   <span>Edit Kegiatan</span>
                 </button>
                 <button
-                  onClick={() => { setDetailItem(null); setDeleteConfirm(detailItem.id) }}
+                  onClick={() => {
+                    setDetailItem(null)
+                    setDeleteConfirm(detailItem.id)
+                  }}
                   className="flex-1 flex items-center justify-center space-x-2 py-3 bg-red-500/10 text-red-400 border border-red-500/30 rounded-xl hover:bg-red-500/20 transition-all font-medium"
                 >
                   <Trash2 size={16} />

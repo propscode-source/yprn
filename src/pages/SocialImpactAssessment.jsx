@@ -14,8 +14,8 @@ import {
   Image as ImageIcon,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { API_URL, getImageUrl } from '../config/api'
 
-const API_URL = 'http://localhost:5000/api'
 const ITEMS_PER_PAGE = 6
 
 const ImageSlider = ({ images }) => {
@@ -268,7 +268,7 @@ const SocialImpactAssessment = () => {
                   >
                     {item.gambar ? (
                       <img
-                        src={`http://localhost:5000${item.gambar}`}
+                        src={getImageUrl(item.gambar)}
                         alt={item.judul}
                         className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
                         loading="lazy"
@@ -369,7 +369,7 @@ const SocialImpactAssessment = () => {
             <div className="relative">
               {selectedItem.gambar ? (
                 <img
-                  src={`http://localhost:5000${selectedItem.gambar}`}
+                  src={getImageUrl(selectedItem.gambar)}
                   alt={selectedItem.judul}
                   className="w-full h-72 object-cover rounded-t-2xl"
                 />

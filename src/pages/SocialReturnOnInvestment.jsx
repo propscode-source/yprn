@@ -1,8 +1,22 @@
 import { useState, useEffect, useCallback } from 'react'
-import { TrendingUp, DollarSign, BarChart3, PieChart, Camera, ArrowRight, CheckCircle, ChevronLeft, ChevronRight, X, Calendar, MapPin, Image as ImageIcon } from 'lucide-react'
+import {
+  TrendingUp,
+  DollarSign,
+  BarChart3,
+  PieChart,
+  Camera,
+  ArrowRight,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Calendar,
+  MapPin,
+  Image as ImageIcon,
+} from 'lucide-react'
 import { Link } from 'react-router-dom'
 
-const API_URL = 'http://localhost:5000/api'
+import { API_URL, getImageUrl } from '../config/api'
 const ITEMS_PER_PAGE = 6
 
 const ImageSlider = ({ images }) => {
@@ -99,7 +113,7 @@ const SocialReturnOnInvestment = () => {
       const res = await fetch(`${API_URL}/kegiatan`)
       if (res.ok) {
         const data = await res.json()
-        setGaleri(data.filter(item => item.kategori === 'sroi'))
+        setGaleri(data.filter((item) => item.kategori === 'sroi'))
       }
     } catch (error) {
       console.error('Error fetching galeri SROI:', error)
@@ -129,54 +143,60 @@ const SocialReturnOnInvestment = () => {
     'Meningkatkan akuntabilitas dan transparansi program',
     'Mengidentifikasi dampak terbesar dari investasi sosial',
     'Memberikan narasi kuat bagi pemangku kepentingan',
-    'Mendukung perencanaan program yang lebih efektif'
+    'Mendukung perencanaan program yang lebih efektif',
   ]
 
   const stages = [
     {
       icon: BarChart3,
       title: 'Menetapkan Ruang Lingkup',
-      description: 'Menentukan batas analisis, stakeholder utama, dan periode kajian SROI.'
+      description: 'Menentukan batas analisis, stakeholder utama, dan periode kajian SROI.',
     },
     {
       icon: TrendingUp,
       title: 'Memetakan Outcome',
-      description: 'Mengidentifikasi input, output, dan outcome dari program atau investasi yang dikaji.'
+      description:
+        'Mengidentifikasi input, output, dan outcome dari program atau investasi yang dikaji.',
     },
     {
       icon: DollarSign,
       title: 'Monetisasi Dampak',
-      description: 'Memberikan nilai moneter (proxy) terhadap dampak sosial dan lingkungan yang dihasilkan.'
+      description:
+        'Memberikan nilai moneter (proxy) terhadap dampak sosial dan lingkungan yang dihasilkan.',
     },
     {
       icon: PieChart,
       title: 'Menghitung SROI Ratio',
-      description: 'Menghitung rasio antara nilai dampak sosial yang dihasilkan dengan total investasi yang dikeluarkan.'
-    }
+      description:
+        'Menghitung rasio antara nilai dampak sosial yang dihasilkan dengan total investasi yang dikeluarkan.',
+    },
   ]
 
   const projects = [
     {
       title: 'SROI Program Rehabilitasi Lahan',
-      description: 'Analisis pengembalian investasi sosial dari program rehabilitasi lahan bekas tambang di Sumatera Selatan.',
+      description:
+        'Analisis pengembalian investasi sosial dari program rehabilitasi lahan bekas tambang di Sumatera Selatan.',
       image: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&h=500&fit=crop',
       ratio: '1 : 4.2',
-      tags: ['Rehabilitasi Lahan', 'Tambang']
+      tags: ['Rehabilitasi Lahan', 'Tambang'],
     },
     {
       title: 'SROI Pemberdayaan Ekonomi Lokal',
-      description: 'Kajian nilai sosial dari program pemberdayaan ekonomi masyarakat sekitar kawasan hutan.',
+      description:
+        'Kajian nilai sosial dari program pemberdayaan ekonomi masyarakat sekitar kawasan hutan.',
       image: 'https://images.unsplash.com/photo-1593113630400-ea4288922497?w=800&h=500&fit=crop',
       ratio: '1 : 3.8',
-      tags: ['Pemberdayaan', 'Ekonomi Lokal']
+      tags: ['Pemberdayaan', 'Ekonomi Lokal'],
     },
     {
       title: 'SROI Program Edukasi Lingkungan',
-      description: 'Pengukuran dampak sosial dari program edukasi lingkungan untuk masyarakat dan generasi muda.',
+      description:
+        'Pengukuran dampak sosial dari program edukasi lingkungan untuk masyarakat dan generasi muda.',
       image: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=800&h=500&fit=crop',
       ratio: '1 : 5.1',
-      tags: ['Edukasi', 'Lingkungan']
-    }
+      tags: ['Edukasi', 'Lingkungan'],
+    },
   ]
 
   return (
@@ -195,7 +215,9 @@ const SocialReturnOnInvestment = () => {
                 Social Return on <span className="gradient-text">Investment</span>
               </h1>
               <p className="text-body">
-                Social Return on Investment (SROI) adalah kerangka kerja untuk mengukur dan memahami nilai sosial, lingkungan, dan ekonomi yang dihasilkan oleh suatu program atau investasi, melampaui sekadar pengembalian finansial.
+                Social Return on Investment (SROI) adalah kerangka kerja untuk mengukur dan memahami
+                nilai sosial, lingkungan, dan ekonomi yang dihasilkan oleh suatu program atau
+                investasi, melampaui sekadar pengembalian finansial.
               </p>
               <div className="flex items-center space-x-6 pt-4">
                 <div className="text-center">
@@ -228,7 +250,9 @@ const SocialReturnOnInvestment = () => {
                 Manfaat Analisis <span className="gradient-text">SROI</span>
               </h2>
               <p className="text-body">
-                SROI membantu organisasi dan pemangku kepentingan memahami nilai sesungguhnya dari investasi sosial mereka, dengan mengkonversi dampak sosial dan lingkungan menjadi nilai moneter.
+                SROI membantu organisasi dan pemangku kepentingan memahami nilai sesungguhnya dari
+                investasi sosial mereka, dengan mengkonversi dampak sosial dan lingkungan menjadi
+                nilai moneter.
               </p>
               <div className="space-y-3">
                 {benefits.map((benefit, index) => (
@@ -284,7 +308,10 @@ const SocialReturnOnInvestment = () => {
                 <div className="p-6">
                   <div className="flex flex-wrap gap-2 mb-3">
                     {project.tags.map((tag, i) => (
-                      <span key={i} className="text-xs px-3 py-1 bg-primary/10 text-primary rounded-full border border-primary/20">
+                      <span
+                        key={i}
+                        className="text-xs px-3 py-1 bg-primary/10 text-primary rounded-full border border-primary/20"
+                      >
                         {tag}
                       </span>
                     ))}
@@ -334,7 +361,7 @@ const SocialReturnOnInvestment = () => {
                   >
                     {item.gambar ? (
                       <img
-                        src={`http://localhost:5000${item.gambar}`}
+                        src={getImageUrl(item.gambar)}
                         alt={item.judul}
                         className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
                         loading="lazy"
@@ -411,7 +438,9 @@ const SocialReturnOnInvestment = () => {
               {galeri.length > 0 && (
                 <div className="text-center mt-4">
                   <p className="text-text-muted text-sm">
-                    Menampilkan {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, galeri.length)} dari {galeri.length} dokumentasi
+                    Menampilkan {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
+                    {Math.min(currentPage * ITEMS_PER_PAGE, galeri.length)} dari {galeri.length}{' '}
+                    dokumentasi
                   </p>
                 </div>
               )}
@@ -433,7 +462,7 @@ const SocialReturnOnInvestment = () => {
             <div className="relative">
               {selectedItem.gambar ? (
                 <img
-                  src={`http://localhost:5000${selectedItem.gambar}`}
+                  src={getImageUrl(selectedItem.gambar)}
                   alt={selectedItem.judul}
                   className="w-full h-72 object-cover rounded-t-2xl"
                 />
@@ -485,11 +514,15 @@ const SocialReturnOnInvestment = () => {
               Tertarik dengan Layanan SROI Kami?
             </h2>
             <p className="text-lg text-text-body mb-8">
-              Hubungi kami untuk konsultasi mengenai analisis Social Return on Investment untuk program atau investasi sosial Anda.
+              Hubungi kami untuk konsultasi mengenai analisis Social Return on Investment untuk
+              program atau investasi sosial Anda.
             </p>
             <Link to="/kegiatan/social-impact-assessment" className="btn-primary inline-flex group">
               Lihat juga SIA
-              <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
+              <ArrowRight
+                className="ml-2 group-hover:translate-x-1 transition-transform"
+                size={20}
+              />
             </Link>
           </div>
         </div>

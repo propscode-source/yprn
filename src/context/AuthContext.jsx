@@ -1,8 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { API_URL } from '../config/api'
 
 const AuthContext = createContext(null)
-
-const API_URL = 'http://localhost:5000/api'
 
 export const AuthProvider = ({ children }) => {
   const [admin, setAdmin] = useState(null)
@@ -61,7 +60,9 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ admin, token, loading, login, logout, isAuthenticated: !!admin }}>
+    <AuthContext.Provider
+      value={{ admin, token, loading, login, logout, isAuthenticated: !!admin }}
+    >
       {children}
     </AuthContext.Provider>
   )
