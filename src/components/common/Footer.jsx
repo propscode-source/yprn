@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react'
 import { companyInfo } from '../../data/companyData'
-import { useLanguage } from '../../context/LanguageContext'
+import { useLanguage } from '../../hooks/useLanguage'
 
 const Footer = () => {
   const currentYear = new Date().getFullYear()

@@ -1,6 +1,6 @@
 import { ArrowRight, Sparkles, Leaf } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useLanguage } from '../../context/LanguageContext'
+import { useLanguage } from '../../hooks/useLanguage'
 
 const Hero = () => {
   const { t } = useLanguage()

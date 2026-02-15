@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { useLanguage } from '../context/LanguageContext'
+import { useAuth } from '../context/useAuth'
+import { useLanguage } from '../hooks/useLanguage'
 import { LogIn, Eye, EyeOff, Shield } from 'lucide-react'
 
 const Login = () => {

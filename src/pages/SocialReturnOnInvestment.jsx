@@ -15,7 +15,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../hooks/useLanguage'
 
 import { API_URL, getImageUrl } from '../config/api'
 const ITEMS_PER_PAGE = 6

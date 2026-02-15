@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Home, ArrowLeft } from 'lucide-react'
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../hooks/useLanguage'
 
 const NotFound = () => {
   const { t } = useLanguage()

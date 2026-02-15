@@ -3,7 +3,7 @@ import About from '../components/home/About'
 import Stats from '../components/home/Stats'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Leaf, BarChart3 } from 'lucide-react'
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../hooks/useLanguage'
 
 const Home = () => {
   const { t } = useLanguage()

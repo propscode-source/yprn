@@ -6,6 +6,7 @@ import compression from 'compression'
 import pg from 'pg'
 import multer from 'multer'
 import jwt from 'jsonwebtoken'
+import process from 'node:process'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
@@ -115,7 +116,7 @@ const authMiddleware = (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET)
     req.admin = decoded
     next()
-  } catch (error) {
+  } catch {
     return res.status(401).json({ message: 'Token tidak valid' })
   }
 }

@@ -1,6 +1,6 @@
 import { MapPin, Phone, Mail, Clock } from 'lucide-react'
 import { companyInfo } from '../data/companyData'
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../hooks/useLanguage'
 
 const Kontak = () => {
   const { t } = useLanguage()

@@ -1,5 +1,5 @@
 import { Eye, Target, CheckCircle, Heart, Leaf, Users, Award } from 'lucide-react'
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../hooks/useLanguage'
 
 const VisiMisi = () => {
   const { t } = useLanguage()

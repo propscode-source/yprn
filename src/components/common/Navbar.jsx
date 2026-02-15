@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Menu, X, ChevronDown, LogIn, LogOut, LayoutDashboard } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
-import { useLanguage } from '../../context/LanguageContext'
+import { useAuth } from '../../context/useAuth'
+import { useLanguage } from '../../hooks/useLanguage'
 import LanguageSwitcher from './LanguageSwitcher'
 
 const Navbar = () => {

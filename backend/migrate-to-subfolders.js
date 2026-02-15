@@ -6,6 +6,7 @@
 import mysql from 'mysql2/promise'
 import fs from 'fs'
 import path from 'path'
+import process from 'node:process'
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -32,7 +33,9 @@ async function migrate() {
   })
 
   // Ambil semua kegiatan dari database
-  const [rows] = await pool.execute('SELECT id, gambar, kategori FROM kegiatan WHERE gambar IS NOT NULL')
+  const [rows] = await pool.execute(
+    'SELECT id, gambar, kategori FROM kegiatan WHERE gambar IS NOT NULL'
+  )
   console.log(`\n📊 Ditemukan ${rows.length} foto yang perlu dipindahkan\n`)
 
   let success = 0
