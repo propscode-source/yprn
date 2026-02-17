@@ -89,6 +89,9 @@ const SocialReturnOnInvestment = () => {
   const [loadingGaleri, setLoadingGaleri] = useState(true)
   const [selectedItem, setSelectedItem] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const [projects, setProjects] = useState([])
+  const [loadingProjects, setLoadingProjects] = useState(true)
+  const [selectedProject, setSelectedProject] = useState(null)
   const { t, language } = useLanguage()
 
   const totalPages = Math.ceil(galeri.length / ITEMS_PER_PAGE)
@@ -104,6 +107,7 @@ const SocialReturnOnInvestment = () => {
 
   useEffect(() => {
     fetchGaleri()
+    fetchProjects()
   }, [])
 
   const fetchGaleri = async () => {
@@ -117,6 +121,20 @@ const SocialReturnOnInvestment = () => {
       console.error('Error fetching galeri SROI:', error)
     } finally {
       setLoadingGaleri(false)
+    }
+  }
+
+  const fetchProjects = async () => {
+    try {
+      const res = await fetch(`${API_URL}/proyek?kategori=sroi`)
+      if (res.ok) {
+        const data = await res.json()
+        setProjects(data)
+      }
+    } catch (error) {
+      console.error('Error fetching proyek SROI:', error)
+    } finally {
+      setLoadingProjects(false)
     }
   }
 
@@ -138,28 +156,6 @@ const SocialReturnOnInvestment = () => {
   const stageIcons = [BarChart3, TrendingUp, DollarSign, PieChart]
   const benefits = t('sroiPage.benefits')
   const stages = t('sroiPage.stages')
-  const projects = t('sroiPage.projects')
-
-  const projectImages = [
-    'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&h=500&fit=crop',
-    'https://images.unsplash.com/photo-1593113630400-ea4288922497?w=800&h=500&fit=crop',
-    'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=800&h=500&fit=crop',
-  ]
-
-  const projectRatios = ['1 : 4.2', '1 : 3.8', '1 : 5.1']
-
-  const projectTags =
-    language === 'id'
-      ? [
-          ['Rehabilitasi Lahan', 'Tambang'],
-          ['Pemberdayaan', 'Ekonomi Lokal'],
-          ['Edukasi', 'Lingkungan'],
-        ]
-      : [
-          ['Land Rehabilitation', 'Mining'],
-          ['Empowerment', 'Local Economy'],
-          ['Education', 'Environment'],
-        ]
 
   return (
     <div className="pt-20 bg-dark">
@@ -250,38 +246,59 @@ const SocialReturnOnInvestment = () => {
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {Array.isArray(projects) &&
-              projects.map((project, index) => (
-                <div key={index} className="card-glow overflow-hidden card-lift group">
+          {loadingProjects ? (
+            <div className="flex justify-center py-10">
+              <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            </div>
+          ) : projects.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-text-body text-lg">{t('sroiPage.noProject')}</p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-8">
+              {projects.map((project) => (
+                <div
+                  key={project.id}
+                  onClick={() => setSelectedProject(project)}
+                  className="card-glow overflow-hidden card-lift group cursor-pointer"
+                >
                   <div className="relative overflow-hidden">
-                    <img
-                      src={projectImages[index]}
-                      alt={project.title}
-                      className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
+                    {project.gambar ? (
+                      <img
+                        src={getImageUrl(project.gambar)}
+                        alt={project.judul}
+                        className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-48 bg-dark-200/30 flex items-center justify-center">
+                        <BarChart3 className="text-text-muted" size={48} />
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-dark to-transparent opacity-60"></div>
-                    <div className="absolute bottom-4 left-4 bg-primary/90 text-dark px-3 py-1 rounded-lg font-bold text-sm">
-                      Rasio SROI: {projectRatios[index]}
-                    </div>
                   </div>
                   <div className="p-6">
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {projectTags[index]?.map((tag, i) => (
-                        <span
-                          key={i}
-                          className="text-xs px-3 py-1 bg-primary/10 text-primary rounded-full border border-primary/20"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    <h3 className="text-lg font-bold text-text-heading mb-2">{project.title}</h3>
-                    <p className="text-text-body text-sm">{project.description}</p>
+                    {Array.isArray(project.tags) && project.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {project.tags.map((tag, i) => (
+                          <span
+                            key={i}
+                            className="text-xs px-3 py-1 bg-primary/10 text-primary rounded-full border border-primary/20"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <h3 className="text-lg font-bold text-text-heading mb-2">{project.judul}</h3>
+                    <p className="text-text-body text-sm">{project.deskripsi}</p>
+                    <p className="text-primary text-xs mt-3 font-medium">
+                      {t('sroiPage.clickDetail')}
+                    </p>
                   </div>
                 </div>
               ))}
-          </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -455,6 +472,64 @@ const SocialReturnOnInvestment = () => {
               </div>
               {selectedItem.deskripsi && (
                 <p className="text-text-body leading-relaxed">{selectedItem.deskripsi}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Project Detail Popup */}
+      {selectedProject && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark/80 backdrop-blur-sm"
+          onClick={() => setSelectedProject(null)}
+        >
+          <div
+            className="bg-dark-50 rounded-2xl border border-dark-200/50 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative">
+              {selectedProject.gambar ? (
+                <img
+                  src={getImageUrl(selectedProject.gambar)}
+                  alt={selectedProject.judul}
+                  className="w-full h-72 object-cover rounded-t-2xl"
+                />
+              ) : (
+                <div className="w-full h-72 bg-dark-200/30 flex items-center justify-center rounded-t-2xl">
+                  <ImageIcon className="text-text-muted" size={64} />
+                </div>
+              )}
+              <button
+                onClick={() => setSelectedProject(null)}
+                className="absolute top-4 right-4 w-10 h-10 bg-dark/70 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-red-500 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <h3 className="text-2xl font-bold text-text-heading">{selectedProject.judul}</h3>
+              {Array.isArray(selectedProject.tags) && selectedProject.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedProject.tags.map((tag, i) => (
+                    <span
+                      key={i}
+                      className="text-xs px-3 py-1 bg-primary/10 text-primary rounded-full border border-primary/20"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {selectedProject.deskripsi && (
+                <p className="text-text-body leading-relaxed">{selectedProject.deskripsi}</p>
+              )}
+              {selectedProject.detail && (
+                <div className="bg-dark/30 rounded-xl p-4">
+                  <p className="text-text-body leading-relaxed whitespace-pre-line">
+                    {selectedProject.detail}
+                  </p>
+                </div>
               )}
             </div>
           </div>

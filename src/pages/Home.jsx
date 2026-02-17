@@ -1,9 +1,11 @@
+import { motion } from 'motion/react'
 import Hero from '../components/home/Hero'
 import About from '../components/home/About'
 import Stats from '../components/home/Stats'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Leaf, BarChart3 } from 'lucide-react'
 import { useLanguage } from '../hooks/useLanguage'
+import { fadeInUp, staggerContainer, staggerItem, defaultViewport } from '../utils/animations'
 
 const Home = () => {
   const { t } = useLanguage()
@@ -21,18 +23,34 @@ const Home = () => {
           <div className="absolute bottom-20 left-20 w-80 h-80 bg-secondary/5 rounded-full blur-[100px]"></div>
         </div>
         <div className="container-custom relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-16">
+          {/* Section heading — fade in saat scroll */}
+          <motion.div
+            variants={fadeInUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={defaultViewport}
+            custom={0}
+            className="text-center max-w-3xl mx-auto mb-16"
+          >
             <span className="text-primary font-semibold">{t('homeKegiatan.label')}</span>
             <h2 className="heading-primary mt-2 mb-4">
               {t('homeKegiatan.title1')}{' '}
               <span className="gradient-text">{t('homeKegiatan.title2')}</span>
             </h2>
             <p className="text-body">{t('homeKegiatan.description')}</p>
-          </div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          {/* Cards — stagger */}
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={defaultViewport}
+            custom={0.2}
+            className="grid md:grid-cols-2 gap-8"
+          >
             {/* SIA Card */}
-            <div className="card-glow p-8 card-lift group">
+            <motion.div variants={staggerItem} className="card-glow p-8 card-lift group">
               <div className="w-14 h-14 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center mb-6 shadow-glow-primary">
                 <BarChart3 className="text-dark" size={28} />
               </div>
@@ -46,10 +64,10 @@ const Home = () => {
               >
                 {t('homeKegiatan.btnMore')} <ArrowRight size={18} />
               </Link>
-            </div>
+            </motion.div>
 
             {/* SROI Card */}
-            <div className="card-glow p-8 card-lift group">
+            <motion.div variants={staggerItem} className="card-glow p-8 card-lift group">
               <div className="w-14 h-14 bg-gradient-to-br from-secondary to-primary rounded-2xl flex items-center justify-center mb-6 shadow-glow-secondary">
                 <Leaf className="text-dark" size={28} />
               </div>
@@ -63,8 +81,8 @@ const Home = () => {
               >
                 {t('homeKegiatan.btnMore')} <ArrowRight size={18} />
               </Link>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
@@ -76,12 +94,27 @@ const Home = () => {
         </div>
 
         <div className="container-custom relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-text-heading mb-6">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={defaultViewport}
+            custom={0.15}
+            className="max-w-3xl mx-auto text-center"
+          >
+            <motion.h2
+              variants={staggerItem}
+              className="text-3xl md:text-4xl lg:text-5xl font-bold text-text-heading mb-6"
+            >
               {t('homeCTA.title')}
-            </h2>
-            <p className="text-lg text-text-body mb-8">{t('homeCTA.description')}</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            </motion.h2>
+            <motion.p variants={staggerItem} className="text-lg text-text-body mb-8">
+              {t('homeCTA.description')}
+            </motion.p>
+            <motion.div
+              variants={staggerItem}
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+            >
               <Link to="/tentang/visi-misi" className="btn-primary">
                 {t('homeCTA.btnAbout')}
                 <ArrowRight className="ml-2" size={20} />
@@ -89,8 +122,8 @@ const Home = () => {
               <Link to="/kegiatan/social-impact-assessment" className="btn-glow">
                 {t('homeCTA.btnActivity')}
               </Link>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
     </>

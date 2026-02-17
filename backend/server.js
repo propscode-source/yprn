@@ -6,6 +6,7 @@ import compression from 'compression'
 import pg from 'pg'
 import multer from 'multer'
 import jwt from 'jsonwebtoken'
+import bcrypt from 'bcrypt'
 import process from 'node:process'
 import path from 'path'
 import fs from 'fs'
@@ -59,14 +60,45 @@ if (!fs.existsSync(uploadsDir)) {
 app.use('/uploads', express.static(uploadsDir))
 
 // PostgreSQL Connection Pool (Supabase)
+// Pool dikonfigurasi untuk performa koneksi <1ms pada request berikutnya
+// setelah warm-up awal (koneksi pertama tetap butuh network round-trip).
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: 10,
+  ssl: { rejectUnauthorized: false },
+
+  // === Pool Size ===
+  max: 20, // Maksimum koneksi bersamaan
+  min: 2, // Minimum koneksi idle yang selalu siap (warm pool)
+
+  // === Timeout (performa <1ms) ===
+  idleTimeoutMillis: 30000, // Koneksi idle ditutup setelah 30 detik
+  connectionTimeoutMillis: 5000, // Gagal jika tidak dapat koneksi dalam 5 detik
+  allowExitOnIdle: false, // Jangan tutup pool saat idle (keep connections warm)
+
+  // === Query Safety ===
+  statement_timeout: 10000, // Timeout query setelah 10 detik (anti long-running query)
+  query_timeout: 10000, // Client-side query timeout
+})
+
+// Pool warm-up: buat koneksi awal saat server start
+// agar request pertama tidak perlu menunggu handshake TCP+SSL.
+pool
+  .connect()
+  .then((client) => {
+    client.release()
+    console.log('Database pool warmed up — koneksi siap')
+  })
+  .catch((err) => {
+    console.error('Database warm-up gagal:', err.message)
+  })
+
+// Pool error handler — cegah crash jika koneksi idle terputus
+pool.on('error', (err) => {
+  console.error('Pool idle client error:', err.message)
 })
 
 // Buat subfolder uploads per kategori
-const kategoriDirs = ['kegiatan', 'sia', 'sroi']
+const kategoriDirs = ['kegiatan', 'sia', 'sroi', 'beranda']
 kategoriDirs.forEach((dir) => {
   const dirPath = path.join(uploadsDir, dir)
   if (!fs.existsSync(dirPath)) {
@@ -121,6 +153,33 @@ const authMiddleware = (req, res, next) => {
   }
 }
 
+// ==================== HEALTH CHECK ====================
+// Endpoint untuk memantau performa pool dan latensi database.
+// Berguna untuk monitoring production dan verifikasi target <1ms.
+app.get('/api/health', async (req, res) => {
+  const start = process.hrtime.bigint()
+  try {
+    await pool.query('SELECT 1')
+    const end = process.hrtime.bigint()
+    const latencyMs = Number(end - start) / 1_000_000 // nanoseconds -> ms
+
+    const { totalCount, idleCount, waitingCount } = pool
+    res.json({
+      status: 'ok',
+      db: {
+        latency_ms: parseFloat(latencyMs.toFixed(3)),
+        pool: {
+          total: totalCount,
+          idle: idleCount,
+          waiting: waitingCount,
+        },
+      },
+    })
+  } catch (error) {
+    res.status(503).json({ status: 'error', message: error.message })
+  }
+})
+
 // ==================== AUTH ROUTES ====================
 
 // Login (tanpa register)
@@ -132,16 +191,21 @@ app.post('/api/login', async (req, res) => {
       return res.status(400).json({ message: 'Username dan password harus diisi' })
     }
 
-    const { rows } = await pool.query('SELECT * FROM admin WHERE username = $1 AND password = $2', [
-      username,
-      password,
-    ])
+    // Cari admin berdasarkan username saja (password diverifikasi via bcrypt)
+    const { rows } = await pool.query('SELECT * FROM admin WHERE username = $1', [username])
 
     if (rows.length === 0) {
       return res.status(401).json({ message: 'Username atau password salah' })
     }
 
     const admin = rows[0]
+
+    // Verifikasi password dengan bcrypt
+    const isPasswordValid = await bcrypt.compare(password, admin.password)
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Username atau password salah' })
+    }
+
     const token = jwt.sign(
       { id: admin.id, username: admin.username, role: admin.role, nama: admin.nama_lengkap },
       JWT_SECRET,
@@ -167,6 +231,137 @@ app.post('/api/login', async (req, res) => {
 // Verify token
 app.get('/api/verify', authMiddleware, (req, res) => {
   res.json({ valid: true, admin: req.admin })
+})
+
+// Multer config khusus untuk hero beranda
+const heroStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const destDir = path.join(uploadsDir, 'beranda')
+    if (!fs.existsSync(destDir)) {
+      fs.mkdirSync(destDir, { recursive: true })
+    }
+    cb(null, destDir)
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9)
+    cb(null, uniqueSuffix + path.extname(file.originalname))
+  },
+})
+
+const uploadHero = multer({
+  storage: heroStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase())
+    const mimetype = allowedTypes.test(file.mimetype)
+    if (extname && mimetype) {
+      cb(null, true)
+    } else {
+      cb(new Error('Hanya file gambar yang diizinkan!'))
+    }
+  },
+})
+
+// ==================== HERO BERANDA ROUTES ====================
+
+// Get all hero images (public)
+app.get('/api/hero-beranda', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM hero_beranda ORDER BY urutan ASC, created_at DESC'
+    )
+    res.json(rows)
+  } catch (error) {
+    console.error('Get hero beranda error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// Create hero image (admin only)
+app.post('/api/hero-beranda', authMiddleware, uploadHero.single('gambar'), async (req, res) => {
+  try {
+    const { judul, deskripsi, urutan } = req.body
+    const gambar = req.file ? `/uploads/beranda/${req.file.filename}` : null
+
+    if (!gambar) {
+      return res.status(400).json({ message: 'Gambar wajib diupload' })
+    }
+
+    const { rows: inserted } = await pool.query(
+      'INSERT INTO hero_beranda (judul, deskripsi, gambar, urutan, created_by) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+      [judul || null, deskripsi || null, gambar, urutan || 0, req.admin.id]
+    )
+
+    res.status(201).json({
+      message: 'Hero image berhasil ditambahkan',
+      id: inserted[0].id,
+    })
+  } catch (error) {
+    console.error('Create hero beranda error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// Update hero image (admin only)
+app.put('/api/hero-beranda/:id', authMiddleware, uploadHero.single('gambar'), async (req, res) => {
+  try {
+    const { judul, deskripsi, urutan } = req.body
+    const id = req.params.id
+
+    const { rows: existing } = await pool.query('SELECT * FROM hero_beranda WHERE id = $1', [id])
+    if (existing.length === 0) {
+      return res.status(404).json({ message: 'Hero image tidak ditemukan' })
+    }
+
+    let gambar = existing[0].gambar
+    if (req.file) {
+      // Hapus gambar lama
+      if (gambar) {
+        const oldPath = path.join(__dirname, gambar)
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath)
+        }
+      }
+      gambar = `/uploads/beranda/${req.file.filename}`
+    }
+
+    await pool.query(
+      'UPDATE hero_beranda SET judul = $1, deskripsi = $2, gambar = $3, urutan = $4 WHERE id = $5',
+      [judul || null, deskripsi || null, gambar, urutan || 0, id]
+    )
+
+    res.json({ message: 'Hero image berhasil diperbarui' })
+  } catch (error) {
+    console.error('Update hero beranda error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// Delete hero image (admin only)
+app.delete('/api/hero-beranda/:id', authMiddleware, async (req, res) => {
+  try {
+    const { rows: existing } = await pool.query('SELECT * FROM hero_beranda WHERE id = $1', [
+      req.params.id,
+    ])
+    if (existing.length === 0) {
+      return res.status(404).json({ message: 'Hero image tidak ditemukan' })
+    }
+
+    // Hapus file gambar
+    if (existing[0].gambar) {
+      const imgPath = path.join(__dirname, existing[0].gambar)
+      if (fs.existsSync(imgPath)) {
+        fs.unlinkSync(imgPath)
+      }
+    }
+
+    await pool.query('DELETE FROM hero_beranda WHERE id = $1', [req.params.id])
+    res.json({ message: 'Hero image berhasil dihapus' })
+  } catch (error) {
+    console.error('Delete hero beranda error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
 })
 
 // ==================== KEGIATAN ROUTES ====================
@@ -285,6 +480,196 @@ app.delete('/api/kegiatan/:id', authMiddleware, async (req, res) => {
     res.json({ message: 'Kegiatan berhasil dihapus' })
   } catch (error) {
     console.error('Delete kegiatan error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// Multer config khusus untuk proyek
+const proyekStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // Fallback to 'sia' — file will be moved to correct folder after body is parsed
+    const destDir = path.join(uploadsDir, 'sia')
+    if (!fs.existsSync(destDir)) {
+      fs.mkdirSync(destDir, { recursive: true })
+    }
+    cb(null, destDir)
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9)
+    cb(null, 'proyek-' + uniqueSuffix + path.extname(file.originalname))
+  },
+})
+
+const uploadProyek = multer({
+  storage: proyekStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase())
+    const mimetype = allowedTypes.test(file.mimetype)
+    if (extname && mimetype) {
+      cb(null, true)
+    } else {
+      cb(new Error('Hanya file gambar yang diizinkan!'))
+    }
+  },
+})
+
+// ==================== PROYEK ROUTES ====================
+
+// Get all proyek (public) — optional filter by kategori
+app.get('/api/proyek', async (req, res) => {
+  try {
+    const { kategori } = req.query
+    let query = 'SELECT * FROM proyek'
+    const params = []
+    if (kategori) {
+      query += ' WHERE kategori = $1'
+      params.push(kategori)
+    }
+    query += ' ORDER BY created_at DESC'
+    const { rows } = await pool.query(query, params)
+    res.json(rows)
+  } catch (error) {
+    console.error('Get proyek error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// Get single proyek (public)
+app.get('/api/proyek/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM proyek WHERE id = $1', [req.params.id])
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Proyek tidak ditemukan' })
+    }
+    res.json(rows[0])
+  } catch (error) {
+    console.error('Get proyek detail error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// Create proyek (admin only)
+app.post('/api/proyek', authMiddleware, uploadProyek.single('gambar'), async (req, res) => {
+  try {
+    const { judul, deskripsi, detail, tags, kategori } = req.body
+    const kat = kategori || 'sia'
+    let gambar = null
+
+    if (req.file) {
+      // Move file to correct kategori folder if needed
+      const correctDir = path.join(uploadsDir, kat)
+      if (!fs.existsSync(correctDir)) {
+        fs.mkdirSync(correctDir, { recursive: true })
+      }
+      const currentPath = req.file.path
+      const newPath = path.join(correctDir, req.file.filename)
+      if (currentPath !== newPath) {
+        fs.renameSync(currentPath, newPath)
+      }
+      gambar = `/uploads/${kat}/${req.file.filename}`
+    }
+
+    const tagsArray = tags
+      ? typeof tags === 'string'
+        ? tags
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : tags
+      : []
+
+    const { rows: inserted } = await pool.query(
+      'INSERT INTO proyek (judul, deskripsi, detail, tags, gambar, kategori, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+      [judul, deskripsi || null, detail || null, tagsArray, gambar, kat, req.admin.id]
+    )
+
+    res.status(201).json({
+      message: 'Proyek berhasil ditambahkan',
+      id: inserted[0].id,
+    })
+  } catch (error) {
+    console.error('Create proyek error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// Update proyek (admin only)
+app.put('/api/proyek/:id', authMiddleware, uploadProyek.single('gambar'), async (req, res) => {
+  try {
+    const { judul, deskripsi, detail, tags, kategori } = req.body
+    const id = req.params.id
+
+    const { rows: existing } = await pool.query('SELECT * FROM proyek WHERE id = $1', [id])
+    if (existing.length === 0) {
+      return res.status(404).json({ message: 'Proyek tidak ditemukan' })
+    }
+
+    let gambar = existing[0].gambar
+    const kat = kategori || 'sia'
+    if (req.file) {
+      if (gambar) {
+        const oldPath = path.join(__dirname, gambar)
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath)
+        }
+      }
+      // Move file to correct kategori folder if needed
+      const correctDir = path.join(uploadsDir, kat)
+      if (!fs.existsSync(correctDir)) {
+        fs.mkdirSync(correctDir, { recursive: true })
+      }
+      const currentPath = req.file.path
+      const newPath = path.join(correctDir, req.file.filename)
+      if (currentPath !== newPath) {
+        fs.renameSync(currentPath, newPath)
+      }
+      gambar = `/uploads/${kat}/${req.file.filename}`
+    }
+
+    const tagsArray = tags
+      ? typeof tags === 'string'
+        ? tags
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : tags
+      : existing[0].tags || []
+
+    await pool.query(
+      'UPDATE proyek SET judul = $1, deskripsi = $2, detail = $3, tags = $4, gambar = $5, kategori = $6 WHERE id = $7',
+      [judul, deskripsi || null, detail || null, tagsArray, gambar, kat, id]
+    )
+
+    res.json({ message: 'Proyek berhasil diperbarui' })
+  } catch (error) {
+    console.error('Update proyek error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// Delete proyek (admin only)
+app.delete('/api/proyek/:id', authMiddleware, async (req, res) => {
+  try {
+    const { rows: existing } = await pool.query('SELECT * FROM proyek WHERE id = $1', [
+      req.params.id,
+    ])
+    if (existing.length === 0) {
+      return res.status(404).json({ message: 'Proyek tidak ditemukan' })
+    }
+
+    if (existing[0].gambar) {
+      const imgPath = path.join(__dirname, existing[0].gambar)
+      if (fs.existsSync(imgPath)) {
+        fs.unlinkSync(imgPath)
+      }
+    }
+
+    await pool.query('DELETE FROM proyek WHERE id = $1', [req.params.id])
+    res.json({ message: 'Proyek berhasil dihapus' })
+  } catch (error) {
+    console.error('Delete proyek error:', error)
     res.status(500).json({ message: 'Server error' })
   }
 })

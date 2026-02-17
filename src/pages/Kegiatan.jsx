@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
 import { Link } from 'react-router-dom'
 import {
   Camera,
@@ -11,8 +12,16 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { useLanguage } from '../hooks/useLanguage'
-
 import { API_URL, getImageUrl } from '../config/api'
+import {
+  fadeInUp,
+  staggerContainer,
+  staggerItem,
+  backdropVariant,
+  modalVariant,
+  defaultViewport,
+} from '../utils/animations'
+
 const ITEMS_PER_PAGE = 6
 
 const Kegiatan = () => {
@@ -70,12 +79,20 @@ const Kegiatan = () => {
           <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-secondary/10 rounded-full blur-[100px]"></div>
         </div>
         <div className="container-custom relative z-10">
-          <div className="text-center max-w-3xl mx-auto">
-            <h1 className="heading-primary mt-2 mb-4">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            custom={0.15}
+            className="text-center max-w-3xl mx-auto"
+          >
+            <motion.h1 variants={staggerItem} className="heading-primary mt-2 mb-4">
               <span className="gradient-text">{t('kegiatanPage.heroTitle')}</span>
-            </h1>
-            <p className="text-body">{t('kegiatanPage.heroDesc')}</p>
-          </div>
+            </motion.h1>
+            <motion.p variants={staggerItem} className="text-body">
+              {t('kegiatanPage.heroDesc')}
+            </motion.p>
+          </motion.div>
         </div>
       </section>
 
@@ -93,16 +110,31 @@ const Kegiatan = () => {
         <section className="section-padding bg-dark">
           <div className="container-custom">
             {kegiatan.length === 0 ? (
-              <div className="text-center py-20">
+              <motion.div
+                variants={fadeInUp}
+                initial="hidden"
+                animate="visible"
+                custom={0}
+                className="text-center py-20"
+              >
                 <ImageIcon className="mx-auto text-text-muted mb-4" size={48} />
                 <p className="text-text-body text-lg">{t('kegiatanPage.noData')}</p>
-              </div>
+              </motion.div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Gallery cards — stagger */}
+                <motion.div
+                  variants={staggerContainer}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={defaultViewport}
+                  custom={0.12}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                >
                   {paginatedKegiatan.map((item) => (
-                    <div
+                    <motion.div
                       key={item.id}
+                      variants={staggerItem}
                       onClick={() => setSelectedItem(item)}
                       className="group relative rounded-2xl overflow-hidden border border-dark-200 card-lift cursor-pointer"
                     >
@@ -148,9 +180,9 @@ const Kegiatan = () => {
                           <span className="text-sm font-medium">{item.judul}</span>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
 
                 {/* Pagination */}
                 {totalPages > 1 && (
@@ -199,12 +231,24 @@ const Kegiatan = () => {
           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-[120px]"></div>
         </div>
         <div className="container-custom relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-heading mb-6">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={defaultViewport}
+            custom={0.15}
+            className="max-w-3xl mx-auto text-center"
+          >
+            <motion.h2
+              variants={staggerItem}
+              className="text-3xl md:text-4xl font-bold text-text-heading mb-6"
+            >
               {t('kegiatanPage.ctaTitle')}
-            </h2>
-            <p className="text-lg text-text-body mb-8">{t('kegiatanPage.ctaDesc')}</p>
-            <div className="flex flex-wrap justify-center gap-4">
+            </motion.h2>
+            <motion.p variants={staggerItem} className="text-lg text-text-body mb-8">
+              {t('kegiatanPage.ctaDesc')}
+            </motion.p>
+            <motion.div variants={staggerItem} className="flex flex-wrap justify-center gap-4">
               <Link
                 to="/kegiatan/social-impact-assessment"
                 className="btn-primary inline-flex group"
@@ -221,72 +265,82 @@ const Kegiatan = () => {
               >
                 Social Return on Investment
               </Link>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* ===== POPUP DETAIL ===== */}
-      {selectedItem && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark/85 backdrop-blur-sm"
-          onClick={() => setSelectedItem(null)}
-        >
-          <div
-            className="relative bg-dark-50 rounded-2xl border border-dark-200/50 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+      {/* ===== POPUP DETAIL — AnimatePresence untuk smooth open/close ===== */}
+      <AnimatePresence>
+        {selectedItem && (
+          <motion.div
+            variants={backdropVariant}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark/85 backdrop-blur-sm"
+            onClick={() => setSelectedItem(null)}
           >
-            {/* Close */}
-            <button
-              onClick={() => setSelectedItem(null)}
-              className="absolute top-4 right-4 z-10 p-2 bg-dark/70 backdrop-blur-sm text-white rounded-full hover:bg-dark transition-all"
+            <motion.div
+              variants={modalVariant}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="relative bg-dark-50 rounded-2xl border border-dark-200/50 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
             >
-              <X size={20} />
-            </button>
+              {/* Close */}
+              <button
+                onClick={() => setSelectedItem(null)}
+                className="absolute top-4 right-4 z-10 p-2 bg-dark/70 backdrop-blur-sm text-white rounded-full hover:bg-dark transition-all"
+              >
+                <X size={20} />
+              </button>
 
-            {/* Image */}
-            {selectedItem.gambar ? (
-              <img
-                src={getImageUrl(selectedItem.gambar)}
-                alt={selectedItem.judul}
-                className="w-full h-64 md:h-80 object-cover rounded-t-2xl"
-              />
-            ) : (
-              <div className="w-full h-64 md:h-80 bg-dark-200/30 flex items-center justify-center rounded-t-2xl">
-                <ImageIcon className="text-text-muted" size={64} />
-              </div>
-            )}
-
-            {/* Content */}
-            <div className="p-6 md:p-8">
-              <h2 className="text-2xl font-bold text-text-heading mb-4">{selectedItem.judul}</h2>
-
-              <div className="flex flex-wrap gap-3 mb-5">
-                {selectedItem.tanggal && (
-                  <div className="flex items-center space-x-2 text-text-body bg-dark/30 px-3 py-2 rounded-lg">
-                    <Calendar size={16} className="text-primary" />
-                    <span className="text-sm">{formatDate(selectedItem.tanggal)}</span>
-                  </div>
-                )}
-                {selectedItem.lokasi && (
-                  <div className="flex items-center space-x-2 text-text-body bg-dark/30 px-3 py-2 rounded-lg">
-                    <MapPin size={16} className="text-primary" />
-                    <span className="text-sm">{selectedItem.lokasi}</span>
-                  </div>
-                )}
-              </div>
-
-              {selectedItem.deskripsi ? (
-                <p className="text-text-body leading-relaxed whitespace-pre-line">
-                  {selectedItem.deskripsi}
-                </p>
+              {/* Image */}
+              {selectedItem.gambar ? (
+                <img
+                  src={getImageUrl(selectedItem.gambar)}
+                  alt={selectedItem.judul}
+                  className="w-full h-64 md:h-80 object-cover rounded-t-2xl"
+                />
               ) : (
-                <p className="text-text-muted italic">{t('kegiatanPage.noDetailInfo')}</p>
+                <div className="w-full h-64 md:h-80 bg-dark-200/30 flex items-center justify-center rounded-t-2xl">
+                  <ImageIcon className="text-text-muted" size={64} />
+                </div>
               )}
-            </div>
-          </div>
-        </div>
-      )}
+
+              {/* Content */}
+              <div className="p-6 md:p-8">
+                <h2 className="text-2xl font-bold text-text-heading mb-4">{selectedItem.judul}</h2>
+
+                <div className="flex flex-wrap gap-3 mb-5">
+                  {selectedItem.tanggal && (
+                    <div className="flex items-center space-x-2 text-text-body bg-dark/30 px-3 py-2 rounded-lg">
+                      <Calendar size={16} className="text-primary" />
+                      <span className="text-sm">{formatDate(selectedItem.tanggal)}</span>
+                    </div>
+                  )}
+                  {selectedItem.lokasi && (
+                    <div className="flex items-center space-x-2 text-text-body bg-dark/30 px-3 py-2 rounded-lg">
+                      <MapPin size={16} className="text-primary" />
+                      <span className="text-sm">{selectedItem.lokasi}</span>
+                    </div>
+                  )}
+                </div>
+
+                {selectedItem.deskripsi ? (
+                  <p className="text-text-body leading-relaxed whitespace-pre-line">
+                    {selectedItem.deskripsi}
+                  </p>
+                ) : (
+                  <p className="text-text-muted italic">{t('kegiatanPage.noDetailInfo')}</p>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

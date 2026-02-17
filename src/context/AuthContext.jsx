@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from 'react'
+import { createContext, useState, useEffect, useCallback } from 'react'
 import { API_URL } from '../config/api'
 
 const AuthContext = createContext(null)
@@ -8,15 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('admin_token'))
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (token) {
-      verifyToken()
-    } else {
-      setLoading(false)
-    }
-  }, [])
-
-  const verifyToken = async () => {
+  const verifyToken = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/verify`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -32,7 +24,15 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [token])
+
+  useEffect(() => {
+    if (token) {
+      verifyToken()
+    } else {
+      setLoading(false)
+    }
+  }, [token, verifyToken])
 
   const login = async (username, password) => {
     const res = await fetch(`${API_URL}/login`, {

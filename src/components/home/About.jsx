@@ -1,6 +1,14 @@
+import { motion } from 'motion/react'
 import { CheckCircle, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../../hooks/useLanguage'
+import {
+  fadeInLeft,
+  fadeInRight,
+  staggerContainer,
+  staggerItem,
+  defaultViewport,
+} from '../../utils/animations'
 
 const About = () => {
   const { t } = useLanguage()
@@ -11,8 +19,15 @@ const About = () => {
     <section className="section-padding bg-dark">
       <div className="container-custom">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* Image */}
-          <div className="relative">
+          {/* Image — slide dari kiri saat scroll */}
+          <motion.div
+            variants={fadeInLeft}
+            initial="hidden"
+            whileInView="visible"
+            viewport={defaultViewport}
+            custom={0}
+            className="relative"
+          >
             <div className="relative">
               {/* Glow effect */}
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl blur-2xl"></div>
@@ -28,26 +43,44 @@ const About = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Content */}
-          <div className="space-y-6">
+          {/* Content — slide dari kanan saat scroll */}
+          <motion.div
+            variants={fadeInRight}
+            initial="hidden"
+            whileInView="visible"
+            viewport={defaultViewport}
+            custom={0.1}
+            className="space-y-6"
+          >
             <span className="text-primary font-semibold">{t('about.label')}</span>
             <h2 className="heading-primary">
               {t('about.title1')} <span className="gradient-text">{t('about.title2')}</span>
             </h2>
             <p className="text-body">{t('about.description')}</p>
 
-            {/* Features */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+            {/* Features — stagger effect */}
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={defaultViewport}
+              custom={0.12}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4"
+            >
               {Array.isArray(features) &&
                 features.map((feature, index) => (
-                  <div key={index} className="flex items-center space-x-3">
+                  <motion.div
+                    key={index}
+                    variants={staggerItem}
+                    className="flex items-center space-x-3"
+                  >
                     <CheckCircle className="text-primary flex-shrink-0" size={20} />
                     <span className="text-text-body">{feature}</span>
-                  </div>
+                  </motion.div>
                 ))}
-            </div>
+            </motion.div>
 
             <Link to="/tentang/visi-misi" className="btn-primary inline-flex group mt-4">
               {t('about.btnLearnMore')}
@@ -56,7 +89,7 @@ const About = () => {
                 size={20}
               />
             </Link>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

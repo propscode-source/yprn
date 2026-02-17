@@ -1,9 +1,46 @@
+import { motion } from 'motion/react'
 import { MapPin, Phone, Mail, Clock } from 'lucide-react'
 import { companyInfo } from '../data/companyData'
 import { useLanguage } from '../hooks/useLanguage'
+import {
+  fadeInUp,
+  fadeInRight,
+  staggerContainer,
+  staggerItem,
+  defaultViewport,
+} from '../utils/animations'
 
 const Kontak = () => {
   const { t } = useLanguage()
+
+  // Data kartu kontak untuk loop & stagger
+  const contactCards = [
+    {
+      icon: MapPin,
+      title: t('kontakPage.alamat'),
+      content: <p className="text-text-body text-sm">{companyInfo.address}</p>,
+    },
+    {
+      icon: Phone,
+      title: t('kontakPage.telepon'),
+      content: <p className="text-text-body text-sm">{companyInfo.phone}</p>,
+    },
+    {
+      icon: Mail,
+      title: t('kontakPage.email'),
+      content: <p className="text-text-body text-sm">{companyInfo.email}</p>,
+    },
+    {
+      icon: Clock,
+      title: t('kontakPage.jamOperasional'),
+      content: (
+        <>
+          <p className="text-text-body text-sm">{t('kontakPage.jamKerja')}</p>
+          <p className="text-text-body text-sm">{t('kontakPage.jamLibur')}</p>
+        </>
+      ),
+    },
+  ]
 
   return (
     <div className="pt-20 bg-dark">
@@ -14,14 +51,24 @@ const Kontak = () => {
           <div className="absolute bottom-20 left-20 w-80 h-80 bg-secondary/10 rounded-full blur-[100px]"></div>
         </div>
         <div className="container-custom relative z-10">
-          <div className="text-center max-w-3xl mx-auto">
-            <span className="text-primary font-semibold">{t('kontakPage.heroLabel')}</span>
-            <h1 className="heading-primary mt-2 mb-6">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            custom={0.15}
+            className="text-center max-w-3xl mx-auto"
+          >
+            <motion.span variants={staggerItem} className="text-primary font-semibold inline-block">
+              {t('kontakPage.heroLabel')}
+            </motion.span>
+            <motion.h1 variants={staggerItem} className="heading-primary mt-2 mb-6">
               {t('kontakPage.heroTitle1')}{' '}
               <span className="gradient-text">{t('kontakPage.heroTitle2')}</span>
-            </h1>
-            <p className="text-body">{t('kontakPage.heroDesc')}</p>
-          </div>
+            </motion.h1>
+            <motion.p variants={staggerItem} className="text-body">
+              {t('kontakPage.heroDesc')}
+            </motion.p>
+          </motion.div>
         </div>
       </section>
 
@@ -29,70 +76,62 @@ const Kontak = () => {
       <section className="section-padding bg-dark-50">
         <div className="container-custom">
           <div className="grid lg:grid-cols-2 gap-12">
-            {/* Info Kontak */}
+            {/* Info Kontak — stagger cards */}
             <div className="space-y-8">
-              <div>
+              <motion.div
+                variants={fadeInUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={defaultViewport}
+                custom={0}
+              >
                 <h2 className="text-2xl font-bold text-text-heading mb-6">
                   {t('kontakPage.infoTitle1')}{' '}
                   <span className="gradient-text">{t('kontakPage.infoTitle2')}</span>
                 </h2>
                 <p className="text-text-body mb-8">{t('kontakPage.infoDesc')}</p>
-              </div>
+              </motion.div>
 
-              <div className="space-y-6">
-                <div className="card-glow p-5 flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center flex-shrink-0 shadow-glow-primary">
-                    <MapPin className="text-dark" size={22} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-text-heading mb-1">
-                      {t('kontakPage.alamat')}
-                    </h3>
-                    <p className="text-text-body text-sm">{companyInfo.address}</p>
-                  </div>
-                </div>
-
-                <div className="card-glow p-5 flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center flex-shrink-0 shadow-glow-primary">
-                    <Phone className="text-dark" size={22} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-text-heading mb-1">
-                      {t('kontakPage.telepon')}
-                    </h3>
-                    <p className="text-text-body text-sm">{companyInfo.phone}</p>
-                  </div>
-                </div>
-
-                <div className="card-glow p-5 flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center flex-shrink-0 shadow-glow-primary">
-                    <Mail className="text-dark" size={22} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-text-heading mb-1">
-                      {t('kontakPage.email')}
-                    </h3>
-                    <p className="text-text-body text-sm">{companyInfo.email}</p>
-                  </div>
-                </div>
-
-                <div className="card-glow p-5 flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center flex-shrink-0 shadow-glow-primary">
-                    <Clock className="text-dark" size={22} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-text-heading mb-1">
-                      {t('kontakPage.jamOperasional')}
-                    </h3>
-                    <p className="text-text-body text-sm">{t('kontakPage.jamKerja')}</p>
-                    <p className="text-text-body text-sm">{t('kontakPage.jamLibur')}</p>
-                  </div>
-                </div>
-              </div>
+              <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                whileInView="visible"
+                viewport={defaultViewport}
+                custom={0.15}
+                className="space-y-6"
+              >
+                {contactCards.map((card, index) => {
+                  const IconComponent = card.icon
+                  return (
+                    <motion.div
+                      key={index}
+                      variants={staggerItem}
+                      className="card-glow p-5 flex items-start space-x-4"
+                    >
+                      <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center flex-shrink-0 shadow-glow-primary">
+                        <IconComponent className="text-dark" size={22} />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-text-heading mb-1">
+                          {card.title}
+                        </h3>
+                        {card.content}
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </motion.div>
             </div>
 
-            {/* Google Maps */}
-            <div className="space-y-4">
+            {/* Google Maps — fade in dari kanan */}
+            <motion.div
+              variants={fadeInRight}
+              initial="hidden"
+              whileInView="visible"
+              viewport={defaultViewport}
+              custom={0.2}
+              className="space-y-4"
+            >
               <h2 className="text-2xl font-bold text-text-heading mb-6">
                 {t('kontakPage.lokasiTitle1')}{' '}
                 <span className="gradient-text">{t('kontakPage.lokasiTitle2')}</span>
@@ -111,7 +150,7 @@ const Kontak = () => {
                 ></iframe>
               </div>
               <p className="text-text-muted text-xs text-center">{t('kontakPage.mapNote')}</p>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>

@@ -1,7 +1,9 @@
+import { motion } from 'motion/react'
 import { Link } from 'react-router-dom'
-import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react'
+import { Mail, Phone, MapPin } from 'lucide-react'
 import { companyInfo } from '../../data/companyData'
 import { useLanguage } from '../../hooks/useLanguage'
+import { staggerContainer, staggerItem, fadeInUp, defaultViewport } from '../../utils/animations'
 
 const Footer = () => {
   const currentYear = new Date().getFullYear()
@@ -20,11 +22,18 @@ const Footer = () => {
 
   return (
     <footer className="bg-dark border-t border-dark-200/50 text-text-heading">
-      {/* Main Footer */}
+      {/* Main Footer — stagger columns */}
       <div className="container-custom section-padding">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={defaultViewport}
+          custom={0.15}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12"
+        >
           {/* Company Info */}
-          <div className="space-y-6">
+          <motion.div variants={staggerItem} className="space-y-6">
             <div className="flex items-center space-x-3">
               <img
                 src="/assets/Logo.svg"
@@ -33,10 +42,10 @@ const Footer = () => {
               />
             </div>
             <p className="text-text-body leading-relaxed">{companyInfo.tagline}</p>
-          </div>
+          </motion.div>
 
           {/* Tentang Kami */}
-          <div>
+          <motion.div variants={staggerItem}>
             <h4 className="text-lg font-semibold mb-6 text-text-heading">
               {t('footer.tentangKami')}
             </h4>
@@ -52,10 +61,10 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
 
           {/* Kegiatan */}
-          <div>
+          <motion.div variants={staggerItem}>
             <h4 className="text-lg font-semibold mb-6 text-text-heading">{t('footer.kegiatan')}</h4>
             <ul className="space-y-3">
               {menuKegiatan.map((link) => (
@@ -69,10 +78,10 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
 
           {/* Contact Info */}
-          <div>
+          <motion.div variants={staggerItem}>
             <h4 className="text-lg font-semibold mb-6 text-text-heading">{t('footer.kontak')}</h4>
             <ul className="space-y-4">
               <li className="flex items-start space-x-3">
@@ -88,17 +97,24 @@ const Footer = () => {
                 <span className="text-text-body">{companyInfo.email}</span>
               </li>
             </ul>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
 
-      {/* Bottom Footer */}
+      {/* Bottom Footer — simple fade in */}
       <div className="border-t border-dark-200/50">
-        <div className="container-custom py-6">
+        <motion.div
+          variants={fadeInUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={defaultViewport}
+          custom={0}
+          className="container-custom py-6"
+        >
           <p className="text-text-muted text-sm text-center">
             © {currentYear} {companyInfo.name}. All rights reserved.
           </p>
-        </div>
+        </motion.div>
       </div>
     </footer>
   )

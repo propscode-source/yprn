@@ -1,6 +1,5 @@
 import ContactForm from '../components/contact/ContactForm'
 import ContactInfo from '../components/contact/ContactInfo'
-import { companyInfo } from '../data/companyData'
 
 const Contact = () => {
   return (

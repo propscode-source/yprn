@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/useAuth'
 import {
   Plus,
@@ -16,6 +16,8 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
+  Home,
+  Briefcase,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
@@ -34,6 +36,37 @@ const AdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const ITEMS_PER_PAGE = 9
 
+  // Hero Beranda state
+  const [heroImages, setHeroImages] = useState([])
+  const [heroLoading, setHeroLoading] = useState(true)
+  const [showHeroModal, setShowHeroModal] = useState(false)
+  const [editingHero, setEditingHero] = useState(null)
+  const [deleteHeroConfirm, setDeleteHeroConfirm] = useState(null)
+  const [heroFormData, setHeroFormData] = useState({ judul: '', deskripsi: '', urutan: 0 })
+  const [heroImageFile, setHeroImageFile] = useState(null)
+  const [heroImagePreview, setHeroImagePreview] = useState(null)
+  const [heroFormLoading, setHeroFormLoading] = useState(false)
+
+  // Proyek state
+  const [proyek, setProyek] = useState([])
+  const [proyekLoading, setProyekLoading] = useState(true)
+  const [showProyekModal, setShowProyekModal] = useState(false)
+  const [editingProyek, setEditingProyek] = useState(null)
+  const [deleteProyekConfirm, setDeleteProyekConfirm] = useState(null)
+  const [detailProyek, setDetailProyek] = useState(null)
+  const [proyekFormData, setProyekFormData] = useState({
+    judul: '',
+    deskripsi: '',
+    detail: '',
+    tags: '',
+    kategori: 'sia',
+  })
+  const [proyekImageFile, setProyekImageFile] = useState(null)
+  const [proyekImagePreview, setProyekImagePreview] = useState(null)
+  const [proyekFormLoading, setProyekFormLoading] = useState(false)
+  const [proyekCurrentPage, setProyekCurrentPage] = useState(1)
+  const PROYEK_PER_PAGE = 6
+
   // Form state
   const [formData, setFormData] = useState({
     judul: '',
@@ -46,22 +79,248 @@ const AdminDashboard = () => {
   const [imagePreview, setImagePreview] = useState(null)
   const [formLoading, setFormLoading] = useState(false)
 
-  useEffect(() => {
-    fetchKegiatan()
-  }, [])
-
-  const fetchKegiatan = async () => {
+  const fetchKegiatan = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/kegiatan`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
       setKegiatan(data)
-    } catch (error) {
-      console.error('Error fetching kegiatan:', error)
+    } catch (err) {
+      console.error('Error fetching kegiatan:', err)
     } finally {
       setLoading(false)
     }
+  }, [token])
+
+  useEffect(() => {
+    fetchKegiatan()
+  }, [fetchKegiatan])
+
+  // Hero Beranda fetch & handlers
+  const fetchHeroImages = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/hero-beranda`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      setHeroImages(data)
+    } catch (err) {
+      console.error('Error fetching hero images:', err)
+    } finally {
+      setHeroLoading(false)
+    }
+  }, [token])
+
+  useEffect(() => {
+    fetchHeroImages()
+  }, [fetchHeroImages])
+
+  const openCreateHeroModal = () => {
+    setEditingHero(null)
+    setHeroFormData({ judul: '', deskripsi: '', urutan: 0 })
+    setHeroImageFile(null)
+    setHeroImagePreview(null)
+    setShowHeroModal(true)
+  }
+
+  const openEditHeroModal = (item) => {
+    setEditingHero(item)
+    setHeroFormData({
+      judul: item.judul || '',
+      deskripsi: item.deskripsi || '',
+      urutan: item.urutan || 0,
+    })
+    setHeroImageFile(null)
+    setHeroImagePreview(item.gambar ? getImageUrl(item.gambar) : null)
+    setShowHeroModal(true)
+  }
+
+  const handleHeroImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setHeroImageFile(file)
+      setHeroImagePreview(URL.createObjectURL(file))
+    }
+  }
+
+  const handleHeroSubmit = async (e) => {
+    e.preventDefault()
+    setHeroFormLoading(true)
+
+    try {
+      const data = new FormData()
+      data.append('judul', heroFormData.judul)
+      data.append('deskripsi', heroFormData.deskripsi)
+      data.append('urutan', heroFormData.urutan)
+      if (heroImageFile) {
+        data.append('gambar', heroImageFile)
+      }
+
+      const url = editingHero
+        ? `${API_URL}/hero-beranda/${editingHero.id}`
+        : `${API_URL}/hero-beranda`
+
+      const res = await fetch(url, {
+        method: editingHero ? 'PUT' : 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: data,
+      })
+
+      if (res.ok) {
+        showMessage(
+          editingHero ? 'Hero image berhasil diperbarui!' : 'Hero image berhasil ditambahkan!'
+        )
+        setShowHeroModal(false)
+        fetchHeroImages()
+      } else {
+        const errData = await res.json()
+        showMessage(errData.message || 'Terjadi kesalahan', 'error')
+      }
+    } catch {
+      showMessage('Gagal menyimpan hero image', 'error')
+    } finally {
+      setHeroFormLoading(false)
+    }
+  }
+
+  const handleDeleteHero = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/hero-beranda/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (res.ok) {
+        showMessage('Hero image berhasil dihapus!')
+        setDeleteHeroConfirm(null)
+        fetchHeroImages()
+      }
+    } catch {
+      showMessage('Gagal menghapus hero image', 'error')
+    }
+  }
+
+  // ==================== PROYEK HANDLERS ====================
+  const fetchProyek = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/proyek`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setProyek(Array.isArray(data) ? data : [])
+      }
+    } catch (err) {
+      console.error('Error fetching proyek:', err)
+    } finally {
+      setProyekLoading(false)
+    }
+  }, [token])
+
+  useEffect(() => {
+    fetchProyek()
+  }, [fetchProyek])
+
+  const openCreateProyekModal = () => {
+    setEditingProyek(null)
+    setProyekFormData({ judul: '', deskripsi: '', detail: '', tags: '', kategori: 'sia' })
+    setProyekImageFile(null)
+    setProyekImagePreview(null)
+    setShowProyekModal(true)
+  }
+
+  const openEditProyekModal = (item) => {
+    setEditingProyek(item)
+    setProyekFormData({
+      judul: item.judul || '',
+      deskripsi: item.deskripsi || '',
+      detail: item.detail || '',
+      tags: Array.isArray(item.tags) ? item.tags.join(', ') : '',
+      kategori: item.kategori || 'sia',
+    })
+    setProyekImageFile(null)
+    setProyekImagePreview(item.gambar ? getImageUrl(item.gambar) : null)
+    setShowProyekModal(true)
+  }
+
+  const handleProyekImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setProyekImageFile(file)
+      setProyekImagePreview(URL.createObjectURL(file))
+    }
+  }
+
+  const handleProyekSubmit = async (e) => {
+    e.preventDefault()
+    setProyekFormLoading(true)
+
+    try {
+      const data = new FormData()
+      data.append('judul', proyekFormData.judul)
+      data.append('deskripsi', proyekFormData.deskripsi)
+      data.append('detail', proyekFormData.detail)
+      data.append('tags', proyekFormData.tags)
+      data.append('kategori', proyekFormData.kategori)
+      if (proyekImageFile) {
+        data.append('gambar', proyekImageFile)
+      }
+
+      const url = editingProyek ? `${API_URL}/proyek/${editingProyek.id}` : `${API_URL}/proyek`
+
+      const res = await fetch(url, {
+        method: editingProyek ? 'PUT' : 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: data,
+      })
+
+      if (res.ok) {
+        showMessage(editingProyek ? 'Proyek berhasil diperbarui!' : 'Proyek berhasil ditambahkan!')
+        setShowProyekModal(false)
+        fetchProyek()
+      } else {
+        const errData = await res.json()
+        showMessage(errData.message || 'Terjadi kesalahan', 'error')
+      }
+    } catch {
+      showMessage('Gagal menyimpan proyek', 'error')
+    } finally {
+      setProyekFormLoading(false)
+    }
+  }
+
+  const handleDeleteProyek = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/proyek/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (res.ok) {
+        showMessage('Proyek berhasil dihapus!')
+        setDeleteProyekConfirm(null)
+        fetchProyek()
+      }
+    } catch {
+      showMessage('Gagal menghapus proyek', 'error')
+    }
+  }
+
+  const proyekTotalPages = Math.ceil(proyek.length / PROYEK_PER_PAGE)
+  const paginatedProyek = proyek.slice(
+    (proyekCurrentPage - 1) * PROYEK_PER_PAGE,
+    proyekCurrentPage * PROYEK_PER_PAGE
+  )
+
+  const goToProyekPage = (page) => {
+    setProyekCurrentPage(page)
+    document.getElementById('proyek-section')?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  const proyekKategoriLabel = {
+    sia: 'SIA',
+    sroi: 'SROI',
   }
 
   const showMessage = (text, type = 'success') => {
@@ -132,7 +391,7 @@ const AdminDashboard = () => {
         const errData = await res.json()
         showMessage(errData.message || 'Terjadi kesalahan', 'error')
       }
-    } catch (error) {
+    } catch {
       showMessage('Gagal menyimpan kegiatan', 'error')
     } finally {
       setFormLoading(false)
@@ -151,7 +410,7 @@ const AdminDashboard = () => {
         setDeleteConfirm(null)
         fetchKegiatan()
       }
-    } catch (error) {
+    } catch {
       showMessage('Gagal menghapus kegiatan', 'error')
     }
   }
@@ -231,6 +490,99 @@ const AdminDashboard = () => {
 
       {/* Content */}
       <div className="px-0 md:px-6 lg:px-8 max-w-7xl mx-auto py-4 md:py-8">
+        {/* ==================== HERO BERANDA SECTION ==================== */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6 md:mb-8 px-4 md:px-0">
+            <div>
+              <div className="flex items-center space-x-2 mb-1">
+                <Home size={20} className="text-primary" />
+                <h2 className="text-2xl font-bold text-text-heading">Hero Beranda</h2>
+              </div>
+              <p className="text-text-body text-sm mt-1">
+                Kelola gambar hero yang tampil di halaman utama
+              </p>
+            </div>
+            <button
+              onClick={openCreateHeroModal}
+              className="flex items-center space-x-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 text-sm sm:text-base"
+            >
+              <Plus size={18} />
+              <span className="hidden sm:inline">Tambah Gambar</span>
+              <span className="sm:hidden">Tambah</span>
+            </button>
+          </div>
+
+          {heroLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            </div>
+          ) : heroImages.length === 0 ? (
+            <div className="text-center py-12 px-4 bg-dark-50/80 rounded-none md:rounded-2xl border-b md:border border-dark-200/50 mx-0 md:mx-0">
+              <Image className="mx-auto text-text-muted mb-4" size={48} />
+              <p className="text-text-body text-lg">Belum ada hero image</p>
+              <p className="text-text-muted text-sm mt-1">
+                Gambar default akan ditampilkan di halaman beranda
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 md:gap-6">
+              {heroImages.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-dark-50/80 rounded-none md:rounded-2xl border-b md:border border-dark-200/50 overflow-hidden group hover:border-primary/30 transition-all duration-300"
+                >
+                  <div className="relative h-52 sm:h-48 bg-dark-200/30">
+                    {item.gambar ? (
+                      <img
+                        src={getImageUrl(item.gambar)}
+                        alt={item.judul || 'Hero Image'}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Image className="text-text-muted" size={40} />
+                      </div>
+                    )}
+                    <div className="absolute top-3 left-3">
+                      <span className="px-3 py-1 bg-secondary/80 text-white text-xs font-medium rounded-full">
+                        Urutan: {item.urutan}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-4 md:p-5">
+                    <h3 className="text-lg font-bold text-text-heading mb-1 line-clamp-1">
+                      {item.judul || 'Tanpa judul'}
+                    </h3>
+                    {item.deskripsi && (
+                      <p className="text-text-body text-sm mb-3 line-clamp-2">{item.deskripsi}</p>
+                    )}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => openEditHeroModal(item)}
+                        className="flex-1 flex items-center justify-center space-x-1 py-2 bg-primary/10 text-primary border border-primary/30 rounded-xl hover:bg-primary/20 transition-all text-sm font-medium"
+                      >
+                        <Edit3 size={14} />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        onClick={() => setDeleteHeroConfirm(item.id)}
+                        className="flex-1 flex items-center justify-center space-x-1 py-2 bg-red-500/10 text-red-400 border border-red-500/30 rounded-xl hover:bg-red-500/20 transition-all text-sm font-medium"
+                      >
+                        <Trash2 size={14} />
+                        <span>Hapus</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-dark-200/50 mx-4 md:mx-0 mb-8"></div>
+
         {/* Action Bar */}
         <div className="flex items-center justify-between mb-6 md:mb-8 px-4 md:px-0">
           <div>
@@ -389,6 +741,164 @@ const AdminDashboard = () => {
             )}
           </>
         )}
+
+        {/* Divider */}
+        <div className="border-t border-dark-200/50 mx-4 md:mx-0 my-8"></div>
+
+        {/* ==================== PROYEK SECTION ==================== */}
+        <div id="proyek-section" className="mb-12">
+          <div className="flex items-center justify-between mb-6 md:mb-8 px-4 md:px-0">
+            <div>
+              <div className="flex items-center space-x-2 mb-1">
+                <Briefcase size={20} className="text-primary" />
+                <h2 className="text-2xl font-bold text-text-heading">Kelola Proyek</h2>
+              </div>
+              <p className="text-text-body text-sm mt-1">
+                Tambah, edit, atau hapus proyek kajian SIA & SROI
+              </p>
+            </div>
+            <button
+              onClick={openCreateProyekModal}
+              className="flex items-center space-x-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 text-sm sm:text-base"
+            >
+              <Plus size={18} />
+              <span className="hidden sm:inline">Tambah Proyek</span>
+              <span className="sm:hidden">Tambah</span>
+            </button>
+          </div>
+
+          {proyekLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            </div>
+          ) : proyek.length === 0 ? (
+            <div className="text-center py-12 px-4 bg-dark-50/80 rounded-none md:rounded-2xl border-b md:border border-dark-200/50">
+              <Briefcase className="mx-auto text-text-muted mb-4" size={48} />
+              <p className="text-text-body text-lg">Belum ada proyek</p>
+              <p className="text-text-muted text-sm mt-1">
+                Klik tombol &quot;Tambah Proyek&quot; untuk menambahkan
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 md:gap-6">
+                {paginatedProyek.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-dark-50/80 rounded-none md:rounded-2xl border-b md:border border-dark-200/50 overflow-hidden group hover:border-primary/30 transition-all duration-300"
+                  >
+                    <div className="relative h-52 sm:h-48 bg-dark-200/30">
+                      {item.gambar ? (
+                        <img
+                          src={getImageUrl(item.gambar)}
+                          alt={item.judul}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Briefcase className="text-text-muted" size={40} />
+                        </div>
+                      )}
+                      <div className="absolute top-3 right-3">
+                        <span className="px-3 py-1 bg-secondary/80 text-white text-xs font-medium rounded-full">
+                          {proyekKategoriLabel[item.kategori] || item.kategori}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-4 md:p-5">
+                      <h3 className="text-lg font-bold text-text-heading mb-2 line-clamp-1">
+                        {item.judul}
+                      </h3>
+                      {item.deskripsi && (
+                        <p className="text-text-body text-sm mb-3 line-clamp-2">{item.deskripsi}</p>
+                      )}
+                      {Array.isArray(item.tags) && item.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                          {item.tags.map((tag, i) => (
+                            <span
+                              key={i}
+                              className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full border border-primary/20"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => setDetailProyek(item)}
+                          className="flex-1 flex items-center justify-center space-x-1 py-2 bg-blue-500/10 text-blue-400 border border-blue-500/30 rounded-xl hover:bg-blue-500/20 transition-all text-sm font-medium"
+                        >
+                          <Eye size={14} />
+                          <span>Lihat</span>
+                        </button>
+                        <button
+                          onClick={() => openEditProyekModal(item)}
+                          className="flex-1 flex items-center justify-center space-x-1 py-2 bg-primary/10 text-primary border border-primary/30 rounded-xl hover:bg-primary/20 transition-all text-sm font-medium"
+                        >
+                          <Edit3 size={14} />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={() => setDeleteProyekConfirm(item.id)}
+                          className="flex-1 flex items-center justify-center space-x-1 py-2 bg-red-500/10 text-red-400 border border-red-500/30 rounded-xl hover:bg-red-500/20 transition-all text-sm font-medium"
+                        >
+                          <Trash2 size={14} />
+                          <span>Hapus</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {proyekTotalPages > 1 && (
+                <div className="flex items-center justify-center mt-8 space-x-2 px-4 md:px-0">
+                  <button
+                    onClick={() => goToProyekPage(proyekCurrentPage - 1)}
+                    disabled={proyekCurrentPage === 1}
+                    className="p-2 rounded-lg border border-dark-200/50 text-text-body hover:text-primary hover:border-primary/50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  {Array.from({ length: proyekTotalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => goToProyekPage(page)}
+                      className={`w-10 h-10 rounded-lg text-sm font-semibold transition-all ${
+                        proyekCurrentPage === page
+                          ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg shadow-primary/25'
+                          : 'border border-dark-200/50 text-text-body hover:text-primary hover:border-primary/50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => goToProyekPage(proyekCurrentPage + 1)}
+                    disabled={proyekCurrentPage === proyekTotalPages}
+                    className="p-2 rounded-lg border border-dark-200/50 text-text-body hover:text-primary hover:border-primary/50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+              )}
+
+              {proyek.length > 0 && (
+                <div className="text-center mt-4">
+                  <p className="text-text-muted text-sm">
+                    Menampilkan {(proyekCurrentPage - 1) * PROYEK_PER_PAGE + 1}-
+                    {Math.min(proyekCurrentPage * PROYEK_PER_PAGE, proyek.length)} dari{' '}
+                    {proyek.length} proyek
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Create/Edit Modal */}
@@ -655,6 +1165,455 @@ const AdminDashboard = () => {
                 >
                   <Trash2 size={16} />
                   <span>Hapus</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== PROYEK MODALS ==================== */}
+
+      {/* Proyek Create/Edit Modal */}
+      {showProyekModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark/80 backdrop-blur-sm">
+          <div className="bg-dark-50 rounded-2xl border border-dark-200/50 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-dark-200/50">
+              <h3 className="text-lg font-bold text-text-heading">
+                {editingProyek ? 'Edit Proyek' : 'Tambah Proyek Baru'}
+              </h3>
+              <button
+                onClick={() => setShowProyekModal(false)}
+                className="p-2 text-text-muted hover:text-text-heading rounded-lg hover:bg-dark-200/30 transition-all"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleProyekSubmit} className="p-6 space-y-5">
+              {/* Judul */}
+              <div>
+                <label className="block text-sm font-medium text-text-heading mb-2">
+                  Judul Proyek *
+                </label>
+                <input
+                  type="text"
+                  value={proyekFormData.judul}
+                  onChange={(e) => setProyekFormData({ ...proyekFormData, judul: e.target.value })}
+                  className="w-full px-4 py-3 bg-dark/50 border border-dark-200/50 rounded-xl text-text-heading placeholder-text-muted focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                  placeholder="Judul proyek kajian"
+                  required
+                />
+              </div>
+
+              {/* Deskripsi Singkat */}
+              <div>
+                <label className="block text-sm font-medium text-text-heading mb-2">
+                  Deskripsi Singkat
+                </label>
+                <textarea
+                  value={proyekFormData.deskripsi}
+                  onChange={(e) =>
+                    setProyekFormData({ ...proyekFormData, deskripsi: e.target.value })
+                  }
+                  rows={2}
+                  className="w-full px-4 py-3 bg-dark/50 border border-dark-200/50 rounded-xl text-text-heading placeholder-text-muted focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                  placeholder="Deskripsi singkat yang tampil di card..."
+                />
+              </div>
+
+              {/* Detail Lengkap */}
+              <div>
+                <label className="block text-sm font-medium text-text-heading mb-2">
+                  Detail Lengkap
+                </label>
+                <textarea
+                  value={proyekFormData.detail}
+                  onChange={(e) => setProyekFormData({ ...proyekFormData, detail: e.target.value })}
+                  rows={5}
+                  className="w-full px-4 py-3 bg-dark/50 border border-dark-200/50 rounded-xl text-text-heading placeholder-text-muted focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                  placeholder="Penjelasan detail proyek yang akan tampil saat user mengklik..."
+                />
+              </div>
+
+              {/* Tags & Kategori */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-text-heading mb-2">Tags</label>
+                  <input
+                    type="text"
+                    value={proyekFormData.tags}
+                    onChange={(e) => setProyekFormData({ ...proyekFormData, tags: e.target.value })}
+                    className="w-full px-4 py-3 bg-dark/50 border border-dark-200/50 rounded-xl text-text-heading placeholder-text-muted focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                    placeholder="Tag1, Tag2, Tag3"
+                  />
+                  <p className="text-text-muted text-xs mt-1">Pisahkan dengan koma</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-heading mb-2">
+                    Kategori
+                  </label>
+                  <select
+                    value={proyekFormData.kategori}
+                    onChange={(e) =>
+                      setProyekFormData({ ...proyekFormData, kategori: e.target.value })
+                    }
+                    className="w-full px-4 py-3 bg-dark/50 border border-dark-200/50 rounded-xl text-text-heading focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                  >
+                    <option value="sia">SIA</option>
+                    <option value="sroi">SROI</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Upload Gambar */}
+              <div>
+                <label className="block text-sm font-medium text-text-heading mb-2">
+                  Gambar Cover
+                </label>
+                <div className="border-2 border-dashed border-dark-200/50 rounded-xl p-4 text-center hover:border-primary/50 transition-all">
+                  {proyekImagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={proyekImagePreview}
+                        alt="Preview"
+                        className="w-full h-40 object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProyekImageFile(null)
+                          setProyekImagePreview(null)
+                        }}
+                        className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer block py-6">
+                      <Upload className="mx-auto text-text-muted mb-2" size={32} />
+                      <p className="text-text-body text-sm">Klik untuk upload gambar</p>
+                      <p className="text-text-muted text-xs mt-1">JPG, PNG, GIF, WebP (max 5MB)</p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProyekImageChange}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Submit */}
+              <div className="flex space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowProyekModal(false)}
+                  className="flex-1 py-3 px-6 border border-dark-200/50 text-text-body rounded-xl hover:bg-dark-200/20 transition-all font-medium"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={proyekFormLoading}
+                  className="flex-1 py-3 px-6 bg-gradient-to-r from-primary to-secondary text-white rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all font-semibold disabled:opacity-50 flex items-center justify-center"
+                >
+                  {proyekFormLoading ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : editingProyek ? (
+                    'Simpan Perubahan'
+                  ) : (
+                    'Tambah Proyek'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Proyek Detail Modal */}
+      {detailProyek && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark/85 backdrop-blur-sm"
+          onClick={() => setDetailProyek(null)}
+        >
+          <div
+            className="relative bg-dark-50 rounded-2xl border border-dark-200/50 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setDetailProyek(null)}
+              className="absolute top-4 right-4 z-10 p-2 bg-dark/70 backdrop-blur-sm text-white rounded-full hover:bg-dark transition-all"
+            >
+              <X size={20} />
+            </button>
+
+            {detailProyek.gambar ? (
+              <img
+                src={getImageUrl(detailProyek.gambar)}
+                alt={detailProyek.judul}
+                className="w-full h-64 md:h-80 object-cover rounded-t-2xl"
+              />
+            ) : (
+              <div className="w-full h-64 md:h-80 bg-dark-200/30 flex items-center justify-center rounded-t-2xl">
+                <Briefcase className="text-text-muted" size={64} />
+              </div>
+            )}
+
+            <div className="p-6 md:p-8">
+              <span className="inline-block px-3 py-1 bg-secondary/20 text-secondary text-xs font-medium rounded-full mb-3">
+                {proyekKategoriLabel[detailProyek.kategori] || detailProyek.kategori}
+              </span>
+
+              <h2 className="text-2xl font-bold text-text-heading mb-4">{detailProyek.judul}</h2>
+
+              {Array.isArray(detailProyek.tags) && detailProyek.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {detailProyek.tags.map((tag, i) => (
+                    <span
+                      key={i}
+                      className="text-xs px-3 py-1 bg-primary/10 text-primary rounded-full border border-primary/20"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {detailProyek.deskripsi && (
+                <p className="text-text-body leading-relaxed mb-4">{detailProyek.deskripsi}</p>
+              )}
+
+              {detailProyek.detail ? (
+                <div className="bg-dark/30 rounded-xl p-4 mb-6">
+                  <h4 className="text-sm font-semibold text-text-heading mb-2">Detail Proyek</h4>
+                  <p className="text-text-body leading-relaxed whitespace-pre-line">
+                    {detailProyek.detail}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-text-muted italic mb-6">Belum ada detail proyek.</p>
+              )}
+
+              <div className="flex space-x-3 pt-4 border-t border-dark-200/30">
+                <button
+                  onClick={() => {
+                    setDetailProyek(null)
+                    openEditProyekModal(detailProyek)
+                  }}
+                  className="flex-1 flex items-center justify-center space-x-2 py-3 bg-primary/10 text-primary border border-primary/30 rounded-xl hover:bg-primary/20 transition-all font-medium"
+                >
+                  <Edit3 size={16} />
+                  <span>Edit Proyek</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setDetailProyek(null)
+                    setDeleteProyekConfirm(detailProyek.id)
+                  }}
+                  className="flex-1 flex items-center justify-center space-x-2 py-3 bg-red-500/10 text-red-400 border border-red-500/30 rounded-xl hover:bg-red-500/20 transition-all font-medium"
+                >
+                  <Trash2 size={16} />
+                  <span>Hapus</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Proyek Delete Confirmation Modal */}
+      {deleteProyekConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark/80 backdrop-blur-sm">
+          <div className="bg-dark-50 rounded-2xl border border-dark-200/50 p-6 w-full max-w-sm">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-14 h-14 bg-red-500/10 rounded-2xl mb-4">
+                <AlertCircle className="text-red-400" size={28} />
+              </div>
+              <h3 className="text-lg font-bold text-text-heading mb-2">Hapus Proyek?</h3>
+              <p className="text-text-body text-sm mb-6">
+                Data yang dihapus tidak dapat dikembalikan.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setDeleteProyekConfirm(null)}
+                  className="flex-1 py-3 border border-dark-200/50 text-text-body rounded-xl hover:bg-dark-200/20 transition-all font-medium"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={() => handleDeleteProyek(deleteProyekConfirm)}
+                  className="flex-1 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all font-semibold"
+                >
+                  Hapus
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== HERO BERANDA MODALS ==================== */}
+
+      {/* Hero Create/Edit Modal */}
+      {showHeroModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark/80 backdrop-blur-sm">
+          <div className="bg-dark-50 rounded-2xl border border-dark-200/50 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-dark-200/50">
+              <h3 className="text-lg font-bold text-text-heading">
+                {editingHero ? 'Edit Hero Image' : 'Tambah Hero Image'}
+              </h3>
+              <button
+                onClick={() => setShowHeroModal(false)}
+                className="p-2 text-text-muted hover:text-text-heading rounded-lg hover:bg-dark-200/30 transition-all"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleHeroSubmit} className="p-6 space-y-5">
+              {/* Judul */}
+              <div>
+                <label className="block text-sm font-medium text-text-heading mb-2">
+                  Judul (opsional)
+                </label>
+                <input
+                  type="text"
+                  value={heroFormData.judul}
+                  onChange={(e) => setHeroFormData({ ...heroFormData, judul: e.target.value })}
+                  className="w-full px-4 py-3 bg-dark/50 border border-dark-200/50 rounded-xl text-text-heading placeholder-text-muted focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                  placeholder="Judul untuk alt text gambar"
+                />
+              </div>
+
+              {/* Deskripsi */}
+              <div>
+                <label className="block text-sm font-medium text-text-heading mb-2">
+                  Deskripsi (opsional)
+                </label>
+                <textarea
+                  value={heroFormData.deskripsi}
+                  onChange={(e) => setHeroFormData({ ...heroFormData, deskripsi: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-3 bg-dark/50 border border-dark-200/50 rounded-xl text-text-heading placeholder-text-muted focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                  placeholder="Keterangan gambar..."
+                />
+              </div>
+
+              {/* Urutan */}
+              <div>
+                <label className="block text-sm font-medium text-text-heading mb-2">
+                  Urutan Tampil
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={heroFormData.urutan}
+                  onChange={(e) =>
+                    setHeroFormData({ ...heroFormData, urutan: parseInt(e.target.value) || 0 })
+                  }
+                  className="w-full px-4 py-3 bg-dark/50 border border-dark-200/50 rounded-xl text-text-heading focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                />
+                <p className="text-text-muted text-xs mt-1">Angka lebih kecil tampil lebih dulu</p>
+              </div>
+
+              {/* Upload Gambar */}
+              <div>
+                <label className="block text-sm font-medium text-text-heading mb-2">
+                  Gambar {!editingHero && '*'}
+                </label>
+                <div className="border-2 border-dashed border-dark-200/50 rounded-xl p-4 text-center hover:border-primary/50 transition-all">
+                  {heroImagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={heroImagePreview}
+                        alt="Preview"
+                        className="w-full h-40 object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHeroImageFile(null)
+                          setHeroImagePreview(null)
+                        }}
+                        className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer block py-6">
+                      <Upload className="mx-auto text-text-muted mb-2" size={32} />
+                      <p className="text-text-body text-sm">Klik untuk upload gambar</p>
+                      <p className="text-text-muted text-xs mt-1">
+                        JPG, PNG, GIF, WebP (max 5MB) - Rasio 4:3 disarankan
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleHeroImageChange}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Submit */}
+              <div className="flex space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowHeroModal(false)}
+                  className="flex-1 py-3 px-6 border border-dark-200/50 text-text-body rounded-xl hover:bg-dark-200/20 transition-all font-medium"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={heroFormLoading || (!editingHero && !heroImageFile)}
+                  className="flex-1 py-3 px-6 bg-gradient-to-r from-primary to-secondary text-white rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all font-semibold disabled:opacity-50 flex items-center justify-center"
+                >
+                  {heroFormLoading ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : editingHero ? (
+                    'Simpan Perubahan'
+                  ) : (
+                    'Tambah Gambar'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Hero Delete Confirmation Modal */}
+      {deleteHeroConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark/80 backdrop-blur-sm">
+          <div className="bg-dark-50 rounded-2xl border border-dark-200/50 p-6 w-full max-w-sm">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-14 h-14 bg-red-500/10 rounded-2xl mb-4">
+                <AlertCircle className="text-red-400" size={28} />
+              </div>
+              <h3 className="text-lg font-bold text-text-heading mb-2">Hapus Hero Image?</h3>
+              <p className="text-text-body text-sm mb-6">
+                Gambar yang dihapus tidak dapat dikembalikan.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setDeleteHeroConfirm(null)}
+                  className="flex-1 py-3 border border-dark-200/50 text-text-body rounded-xl hover:bg-dark-200/20 transition-all font-medium"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={() => handleDeleteHero(deleteHeroConfirm)}
+                  className="flex-1 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all font-semibold"
+                >
+                  Hapus
                 </button>
               </div>
             </div>

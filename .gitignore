@@ -8,8 +8,11 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
-dist-ssr
+
+# Build output (otomatis dibuat oleh build, aman dihapus)
+dist/
+dist-ssr/
+build/
 *.local
 
 # Environment variables (credentials, secrets — jangan push ke GitHub!)

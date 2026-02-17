@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'motion/react'
 import { Menu, X, ChevronDown, LogIn, LogOut, LayoutDashboard } from 'lucide-react'
 import { useAuth } from '../../context/useAuth'
 import { useLanguage } from '../../hooks/useLanguage'
 import LanguageSwitcher from './LanguageSwitcher'
+import { mobileMenuVariant, dropdownVariant } from '../../utils/animations'
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -143,31 +145,39 @@ const Navbar = () => {
                     </button>
                   )}
 
-                  <div
-                    className={`absolute top-full left-0 mt-2 w-64 transition-all duration-300 ${
-                      activeDropdown === item.name
-                        ? 'opacity-100 visible translate-y-0'
-                        : 'opacity-0 invisible -translate-y-2'
-                    }`}
-                  >
-                    <div className="bg-dark-50/95 backdrop-blur-xl rounded-xl border border-dark-200/50 shadow-xl shadow-dark/50 overflow-hidden">
-                      {item.dropdown.map((subLink, index) => (
-                        <Link
-                          key={subLink.path}
-                          to={subLink.path}
-                          className={`block px-4 py-3 text-sm font-medium transition-all duration-300 ${
-                            location.pathname === subLink.path
-                              ? 'text-primary bg-primary/10'
-                              : 'text-text-body hover:text-primary hover:bg-primary/5'
-                          } ${
-                            index !== item.dropdown.length - 1 ? 'border-b border-dark-200/30' : ''
-                          }`}
-                        >
-                          {subLink.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Desktop Dropdown — AnimatePresence */}
+                  <AnimatePresence>
+                    {activeDropdown === item.name && (
+                      <motion.div
+                        variants={dropdownVariant}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        className="absolute top-full left-0 mt-2 w-64"
+                      >
+                        <div className="bg-dark-50/95 backdrop-blur-xl rounded-xl border border-dark-200/50 shadow-xl shadow-dark/50 overflow-hidden">
+                          {item.dropdown.map((subLink, index) => (
+                            <Link
+                              key={subLink.path}
+                              to={subLink.path}
+                              onClick={() => setActiveDropdown(null)}
+                              className={`block px-4 py-3 text-sm font-medium transition-all duration-300 ${
+                                location.pathname === subLink.path
+                                  ? 'text-primary bg-primary/10'
+                                  : 'text-text-body hover:text-primary hover:bg-primary/5'
+                              } ${
+                                index !== item.dropdown.length - 1
+                                  ? 'border-b border-dark-200/30'
+                                  : ''
+                              }`}
+                            >
+                              {subLink.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               ) : (
                 <Link
@@ -226,136 +236,150 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      <div
-        className={`md:hidden transition-all duration-500 overflow-hidden ${
-          isOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
-        }`}
-      >
-        <div className="container-custom py-4 bg-dark-50/95 backdrop-blur-xl border-t border-dark-200/50">
-          <div className="flex flex-col space-y-1">
-            {navItems.map((item) =>
-              item.dropdown ? (
-                <div key={item.name}>
-                  <div
-                    className={`flex items-center rounded-lg ${
-                      isActiveParent(item) ? 'bg-primary/10' : ''
-                    }`}
-                  >
-                    {hasParentLink(item) ? (
-                      <>
-                        <Link
-                          to={item.path}
-                          className={`flex-1 text-base font-medium py-3 px-4 transition-all duration-300 ${
-                            isActiveParent(item)
-                              ? 'text-primary'
-                              : 'text-text-body hover:text-primary'
-                          }`}
-                        >
-                          {item.name}
-                        </Link>
-                        <button
-                          onClick={() =>
-                            setActiveDropdown(activeDropdown === item.name ? null : item.name)
-                          }
-                          className="p-3 text-text-body hover:text-primary transition-colors"
-                        >
-                          <ChevronDown
-                            className={`w-4 h-4 transition-transform duration-300 ${
-                              activeDropdown === item.name ? 'rotate-180' : ''
+      {/* Mobile Menu — AnimatePresence untuk smooth slide */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            variants={mobileMenuVariant}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="md:hidden overflow-hidden"
+          >
+            <div className="container-custom py-4 bg-dark-50/95 backdrop-blur-xl border-t border-dark-200/50">
+              <div className="flex flex-col space-y-1">
+                {navItems.map((item) =>
+                  item.dropdown ? (
+                    <div key={item.name}>
+                      <div
+                        className={`flex items-center rounded-lg ${
+                          isActiveParent(item) ? 'bg-primary/10' : ''
+                        }`}
+                      >
+                        {hasParentLink(item) ? (
+                          <>
+                            <Link
+                              to={item.path}
+                              className={`flex-1 text-base font-medium py-3 px-4 transition-all duration-300 ${
+                                isActiveParent(item)
+                                  ? 'text-primary'
+                                  : 'text-text-body hover:text-primary'
+                              }`}
+                            >
+                              {item.name}
+                            </Link>
+                            <button
+                              onClick={() =>
+                                setActiveDropdown(activeDropdown === item.name ? null : item.name)
+                              }
+                              className="p-3 text-text-body hover:text-primary transition-colors"
+                            >
+                              <ChevronDown
+                                className={`w-4 h-4 transition-transform duration-300 ${
+                                  activeDropdown === item.name ? 'rotate-180' : ''
+                                }`}
+                              />
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              setActiveDropdown(activeDropdown === item.name ? null : item.name)
+                            }
+                            className={`flex items-center justify-between w-full text-base font-medium py-3 px-4 rounded-lg transition-all duration-300 ${
+                              isActiveParent(item)
+                                ? 'text-primary bg-primary/10'
+                                : 'text-text-body hover:text-primary hover:bg-primary/5'
                             }`}
-                          />
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() =>
-                          setActiveDropdown(activeDropdown === item.name ? null : item.name)
-                        }
-                        className={`flex items-center justify-between w-full text-base font-medium py-3 px-4 rounded-lg transition-all duration-300 ${
-                          isActiveParent(item)
-                            ? 'text-primary bg-primary/10'
-                            : 'text-text-body hover:text-primary hover:bg-primary/5'
-                        }`}
-                      >
-                        <span>{item.name}</span>
-                        <ChevronDown
-                          className={`w-4 h-4 transition-transform duration-300 ${
-                            activeDropdown === item.name ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </button>
-                    )}
+                          >
+                            <span>{item.name}</span>
+                            <ChevronDown
+                              className={`w-4 h-4 transition-transform duration-300 ${
+                                activeDropdown === item.name ? 'rotate-180' : ''
+                              }`}
+                            />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Mobile sub-dropdown — AnimatePresence */}
+                      <AnimatePresence>
+                        {activeDropdown === item.name && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+                            className="overflow-hidden"
+                          >
+                            {item.dropdown.map((subLink) => (
+                              <Link
+                                key={subLink.path}
+                                to={subLink.path}
+                                className={`block text-sm font-medium py-2.5 px-8 rounded-lg transition-all duration-300 ${
+                                  location.pathname === subLink.path
+                                    ? 'text-primary bg-primary/10'
+                                    : 'text-text-body hover:text-primary hover:bg-primary/5'
+                                }`}
+                              >
+                                {subLink.name}
+                              </Link>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ) : (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={`text-base font-medium py-3 px-4 rounded-lg transition-all duration-300 ${
+                        location.pathname === item.path
+                          ? 'text-primary bg-primary/10'
+                          : 'text-text-body hover:text-primary hover:bg-primary/5'
+                      }`}
+                    >
+                      {item.name}
+                    </Link>
+                  )
+                )}
+                {/* Auth Buttons Mobile */}
+                <div className="pt-4 mt-4 border-t border-dark-200/30">
+                  <div className="mb-3">
+                    <LanguageSwitcher className="w-full justify-center" />
                   </div>
-                  <div
-                    className={`overflow-hidden transition-all duration-300 ${
-                      activeDropdown === item.name ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
-                    }`}
-                  >
-                    {item.dropdown.map((subLink) => (
+                  {isAuthenticated ? (
+                    <>
                       <Link
-                        key={subLink.path}
-                        to={subLink.path}
-                        className={`block text-sm font-medium py-2.5 px-8 rounded-lg transition-all duration-300 ${
-                          location.pathname === subLink.path
-                            ? 'text-primary bg-primary/10'
-                            : 'text-text-body hover:text-primary hover:bg-primary/5'
-                        }`}
+                        to="/admin/dashboard"
+                        className="flex items-center space-x-2 text-base font-medium py-3 px-4 rounded-lg text-primary bg-primary/10 mb-2"
                       >
-                        {subLink.name}
+                        <LayoutDashboard size={18} />
+                        <span>{t('nav.dashboard')}</span>
                       </Link>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`text-base font-medium py-3 px-4 rounded-lg transition-all duration-300 ${
-                    location.pathname === item.path
-                      ? 'text-primary bg-primary/10'
-                      : 'text-text-body hover:text-primary hover:bg-primary/5'
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              )
-            )}
-            {/* Auth Buttons Mobile */}
-            <div className="pt-4 mt-4 border-t border-dark-200/30">
-              <div className="mb-3">
-                <LanguageSwitcher className="w-full justify-center" />
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center space-x-2 w-full text-base font-medium py-3 px-4 rounded-lg text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all"
+                      >
+                        <LogOut size={18} />
+                        <span>{t('nav.keluar')}</span>
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      to="/login"
+                      className="flex items-center space-x-2 text-base font-medium py-3 px-4 rounded-lg text-text-body hover:text-primary hover:bg-primary/5 transition-all"
+                    >
+                      <LogIn size={18} />
+                      <span>{t('nav.login')}</span>
+                    </Link>
+                  )}
+                </div>{' '}
               </div>
-              {isAuthenticated ? (
-                <>
-                  <Link
-                    to="/admin/dashboard"
-                    className="flex items-center space-x-2 text-base font-medium py-3 px-4 rounded-lg text-primary bg-primary/10 mb-2"
-                  >
-                    <LayoutDashboard size={18} />
-                    <span>{t('nav.dashboard')}</span>
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center space-x-2 w-full text-base font-medium py-3 px-4 rounded-lg text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all"
-                  >
-                    <LogOut size={18} />
-                    <span>{t('nav.keluar')}</span>
-                  </button>
-                </>
-              ) : (
-                <Link
-                  to="/login"
-                  className="flex items-center space-x-2 text-base font-medium py-3 px-4 rounded-lg text-text-body hover:text-primary hover:bg-primary/5 transition-all"
-                >
-                  <LogIn size={18} />
-                  <span>{t('nav.login')}</span>
-                </Link>
-              )}
-            </div>{' '}
-          </div>
-        </div>
-      </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   )
 }

@@ -207,11 +207,32 @@ export const translations = {
             'Menyusun rekomendasi dan strategi mitigasi untuk meminimalkan dampak negatif dan memaksimalkan dampak positif.',
         },
       ],
+      projectLabel: 'Kajian',
+      projectTitle1: 'Proyek',
+      projectTitle2: 'SIA Kami',
+      projects: [
+        {
+          title: 'SIA Pembangunan Infrastruktur',
+          description:
+            'Kajian dampak sosial dari pembangunan infrastruktur jalan dan jembatan terhadap masyarakat di Kalimantan Timur.',
+        },
+        {
+          title: 'SIA Pengembangan Kawasan Industri',
+          description:
+            'Analisis dampak sosial dari pengembangan kawasan industri terhadap komunitas lokal dan ekosistem sekitar.',
+        },
+        {
+          title: 'SIA Program Relokasi Masyarakat',
+          description:
+            'Penilaian dampak sosial dari program relokasi masyarakat terdampak proyek pembangunan bendungan.',
+        },
+      ],
       galeriLabel: 'Dokumentasi',
       galeriTitle1: 'Galeri',
       galeriTitle2: 'Kegiatan SIA',
       galeriDesc:
         'Dokumentasi kegiatan Social Impact Assessment yang telah kami laksanakan di berbagai wilayah.',
+      noProject: 'Belum ada proyek SIA',
       noGaleri: 'Belum ada dokumentasi SIA',
       clickDetail: 'Klik untuk lihat detail',
       showingInfo: 'Menampilkan',
@@ -291,6 +312,7 @@ export const translations = {
       galeriTitle2: 'Kegiatan SROI',
       galeriDesc:
         'Dokumentasi kegiatan analisis Social Return on Investment yang telah kami laksanakan.',
+      noProject: 'Belum ada proyek SROI',
       noGaleri: 'Belum ada dokumentasi SROI',
       clickDetail: 'Klik untuk lihat detail',
       showingInfo: 'Menampilkan',
@@ -551,11 +573,32 @@ export const translations = {
             'Developing recommendations and mitigation strategies to minimize negative impacts and maximize positive impacts.',
         },
       ],
+      projectLabel: 'Studies',
+      projectTitle1: 'Our SIA',
+      projectTitle2: 'Projects',
+      projects: [
+        {
+          title: 'Infrastructure Development SIA',
+          description:
+            'Social impact study of road and bridge infrastructure development on communities in East Kalimantan.',
+        },
+        {
+          title: 'Industrial Zone Development SIA',
+          description:
+            'Analysis of the social impact of industrial zone development on local communities and surrounding ecosystems.',
+        },
+        {
+          title: 'Community Relocation Program SIA',
+          description:
+            'Social impact assessment of the community relocation program affected by a dam construction project.',
+        },
+      ],
       galeriLabel: 'Documentation',
       galeriTitle1: 'SIA Activity',
       galeriTitle2: 'Gallery',
       galeriDesc:
         'Documentation of Social Impact Assessment activities that we have carried out in various regions.',
+      noProject: 'No SIA projects yet',
       noGaleri: 'No SIA documentation yet',
       clickDetail: 'Click to view details',
       showingInfo: 'Showing',
@@ -636,6 +679,7 @@ export const translations = {
       galeriTitle2: 'Gallery',
       galeriDesc:
         'Documentation of Social Return on Investment analysis activities that we have carried out.',
+      noProject: 'No SROI projects yet',
       noGaleri: 'No SROI documentation yet',
       clickDetail: 'Click to view details',
       showingInfo: 'Showing',

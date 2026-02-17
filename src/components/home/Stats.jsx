@@ -1,4 +1,6 @@
+import { motion } from 'motion/react'
 import { useLanguage } from '../../hooks/useLanguage'
+import { staggerContainer, scaleIn, defaultViewport } from '../../utils/animations'
 
 const Stats = () => {
   const { t } = useLanguage()
@@ -19,20 +21,27 @@ const Stats = () => {
       </div>
 
       <div className="container-custom relative z-10">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={defaultViewport}
+          custom={0.2}
+          className="grid grid-cols-2 lg:grid-cols-4 gap-8"
+        >
           {stats.map((stat, index) => (
-            <div key={stat.id} className="text-center group">
+            <motion.div key={stat.id} variants={scaleIn} className="text-center group">
               <p
-                className={`text-4xl md:text-5xl font-bold mb-2 animate-pulse-slow ${
+                className={`text-4xl md:text-5xl font-bold mb-2 ${
                   index % 2 === 0 ? 'text-primary text-glow' : 'text-secondary text-glow-secondary'
                 }`}
               >
                 {stat.value}
               </p>
               <p className="text-text-body text-sm md:text-base">{stat.label}</p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   )

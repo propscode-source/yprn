@@ -36,7 +36,7 @@ async function migrate() {
   const [rows] = await pool.execute(
     'SELECT id, gambar, kategori FROM kegiatan WHERE gambar IS NOT NULL'
   )
-  console.log(`\n📊 Ditemukan ${rows.length} foto yang perlu dipindahkan\n`)
+  console.log(`\nDitemukan ${rows.length} foto yang perlu dipindahkan\n`)
 
   let success = 0
   let skipped = 0

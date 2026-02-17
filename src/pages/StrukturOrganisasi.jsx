@@ -1,4 +1,34 @@
+import { motion } from 'motion/react'
 import { useLanguage } from '../hooks/useLanguage'
+import {
+  fadeInUp,
+  staggerContainer,
+  staggerItem,
+  scaleIn,
+  defaultViewport,
+} from '../utils/animations'
+
+const PersonCard = ({ member, size = 'md', t }) => {
+  const sizeClass = size === 'lg' ? 'w-24 h-24' : 'w-20 h-20'
+  return (
+    <div className="card-glow p-6 card-lift w-full max-w-xs mx-auto">
+      <div className="flex flex-col items-center text-center space-y-3">
+        <div className="relative flex-shrink-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary to-secondary rounded-full blur-md opacity-40"></div>
+          <img
+            src={member.image}
+            alt={t(member.roleKey)}
+            className={`relative ${sizeClass} rounded-full object-cover border-2 border-primary/30`}
+          />
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-text-heading">{member.name}</h3>
+          <p className="text-primary font-medium text-sm">{t(member.roleKey)}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const StrukturOrganisasi = () => {
   const { t } = useLanguage()
@@ -35,28 +65,6 @@ const StrukturOrganisasi = () => {
     },
   ]
 
-  const PersonCard = ({ member, size = 'md' }) => {
-    const sizeClass = size === 'lg' ? 'w-24 h-24' : 'w-20 h-20'
-    return (
-      <div className="card-glow p-6 card-lift w-full max-w-xs mx-auto">
-        <div className="flex flex-col items-center text-center space-y-3">
-          <div className="relative flex-shrink-0">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary to-secondary rounded-full blur-md opacity-40"></div>
-            <img
-              src={member.image}
-              alt={t(member.roleKey)}
-              className={`relative ${sizeClass} rounded-full object-cover border-2 border-primary/30`}
-            />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-text-heading">{member.name}</h3>
-            <p className="text-primary font-medium text-sm">{t(member.roleKey)}</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="pt-20 bg-dark">
       {/* Hero Section */}
@@ -66,57 +74,111 @@ const StrukturOrganisasi = () => {
           <div className="absolute bottom-20 left-20 w-80 h-80 bg-secondary/10 rounded-full blur-[100px]"></div>
         </div>
         <div className="container-custom relative z-10">
-          <div className="text-center max-w-3xl mx-auto">
-            <span className="text-primary font-semibold">{t('struktur.heroLabel')}</span>
-            <h1 className="heading-primary mt-2 mb-6">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            custom={0.15}
+            className="text-center max-w-3xl mx-auto"
+          >
+            <motion.span variants={staggerItem} className="text-primary font-semibold inline-block">
+              {t('struktur.heroLabel')}
+            </motion.span>
+            <motion.h1 variants={staggerItem} className="heading-primary mt-2 mb-6">
               {t('struktur.heroTitle1')}{' '}
               <span className="gradient-text">{t('struktur.heroTitle2')}</span>
-            </h1>
-            <p className="text-body">{t('struktur.heroDesc')}</p>
-          </div>
+            </motion.h1>
+            <motion.p variants={staggerItem} className="text-body">
+              {t('struktur.heroDesc')}
+            </motion.p>
+          </motion.div>
         </div>
       </section>
 
       {/* Struktur Organisasi */}
       <section className="section-padding bg-dark-50">
         <div className="container-custom">
-          <div className="text-center max-w-3xl mx-auto mb-16">
+          <motion.div
+            variants={fadeInUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={defaultViewport}
+            custom={0}
+            className="text-center max-w-3xl mx-auto mb-16"
+          >
             <span className="text-primary font-semibold">{t('struktur.pengurusLabel')}</span>
             <h2 className="heading-primary mt-2 mb-4">
               {t('struktur.pengurusTitle1')}{' '}
               <span className="gradient-text">{t('struktur.pengurusTitle2')}</span>
             </h2>
-          </div>
+          </motion.div>
 
           <div className="max-w-3xl mx-auto">
             {/* Baris Atas: Pembina & Pengawas */}
-            <div className="grid grid-cols-2 gap-8">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={defaultViewport}
+              custom={0.2}
+              className="grid grid-cols-2 gap-8"
+            >
               {atas.map((member, index) => (
-                <PersonCard key={index} member={member} />
+                <motion.div key={index} variants={scaleIn}>
+                  <PersonCard member={member} t={t} />
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
 
             {/* Garis penghubung atas ke tengah */}
-            <div className="flex justify-center py-2">
+            <motion.div
+              initial={{ scaleY: 0 }}
+              whileInView={{ scaleY: 1 }}
+              viewport={defaultViewport}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="flex justify-center py-2 origin-top"
+            >
               <div className="w-0.5 h-10 bg-gradient-to-b from-primary to-secondary"></div>
-            </div>
+            </motion.div>
 
             {/* Baris Tengah: Ketua */}
-            <div className="flex justify-center">
-              <PersonCard member={ketua} size="lg" />
-            </div>
+            <motion.div
+              variants={scaleIn}
+              initial="hidden"
+              whileInView="visible"
+              viewport={defaultViewport}
+              custom={0.1}
+              className="flex justify-center"
+            >
+              <PersonCard member={ketua} size="lg" t={t} />
+            </motion.div>
 
             {/* Garis penghubung tengah ke bawah */}
-            <div className="flex justify-center py-2">
+            <motion.div
+              initial={{ scaleY: 0 }}
+              whileInView={{ scaleY: 1 }}
+              viewport={defaultViewport}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="flex justify-center py-2 origin-top"
+            >
               <div className="w-0.5 h-10 bg-gradient-to-b from-primary to-secondary"></div>
-            </div>
+            </motion.div>
 
             {/* Baris Bawah: Sekretaris & Bendahara */}
-            <div className="grid grid-cols-2 gap-8">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={defaultViewport}
+              custom={0.2}
+              className="grid grid-cols-2 gap-8"
+            >
               {bawah.map((member, index) => (
-                <PersonCard key={index} member={member} />
+                <motion.div key={index} variants={scaleIn}>
+                  <PersonCard member={member} t={t} />
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
