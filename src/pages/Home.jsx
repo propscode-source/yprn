@@ -2,6 +2,7 @@ import { motion } from 'motion/react'
 import Hero from '../components/home/Hero'
 import About from '../components/home/About'
 import Stats from '../components/home/Stats'
+import VideoSection from '../components/home/VideoSection'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Leaf, BarChart3 } from 'lucide-react'
 import { useLanguage } from '../hooks/useLanguage'
@@ -15,6 +16,8 @@ const Home = () => {
       <Hero />
       <About />
       <Stats />
+
+      <VideoSection />
 
       {/* Kegiatan Preview */}
       <section className="section-padding bg-dark-50 relative overflow-hidden">

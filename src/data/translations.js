@@ -54,6 +54,17 @@ export const translations = {
       tahunBerdedikasi: 'Tahun Berdedikasi',
     },
 
+    // ===== HOME - Video Section =====
+    homeVideo: {
+      label: 'Dokumentasi',
+      title1: 'Pelaksanaan',
+      title2: 'Konsultasi',
+      description:
+        'Saksikan proses pelaksanaan konsultasi kami bersama masyarakat dan pemangku kepentingan di lapangan.',
+      playLabel: 'Putar video',
+      caption: 'Pelaksanaan Konsultasi',
+    },
+
     // ===== HOME - Kegiatan Preview =====
     homeKegiatan: {
       label: 'Kegiatan Kami',
@@ -420,6 +431,17 @@ export const translations = {
       komunitasTerdampingi: 'Communities Assisted',
       kajianSROI: 'SROI Studies',
       tahunBerdedikasi: 'Years Dedicated',
+    },
+
+    // ===== HOME - Video Section =====
+    homeVideo: {
+      label: 'Documentation',
+      title1: 'Consultation',
+      title2: 'Implementation',
+      description:
+        'Watch our consultation process with communities and stakeholders in the field.',
+      playLabel: 'Play video',
+      caption: 'Consultation Implementation',
     },
 
     // ===== HOME - Kegiatan Preview =====
