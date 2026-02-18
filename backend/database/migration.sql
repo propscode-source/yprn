@@ -60,8 +60,8 @@ CREATE TABLE IF NOT EXISTS admin (
     -- Password HARUS berupa bcrypt hash (diawali $2a$ atau $2b$).
     -- Constraint di bawah mencegah penyimpanan plain text secara tidak sengaja.
     password      VARCHAR(255) NOT NULL
-                  CONSTRAINT password_must_be_hashed
-                  CHECK (password ~ '^\$2[aby]\$'),
+                    CONSTRAINT password_must_be_hashed
+                    CHECK (password ~ '^\$2[aby]\$'),
     nama_lengkap  VARCHAR(100) NOT NULL,
     email         VARCHAR(100),
     role          role_enum    NOT NULL DEFAULT 'admin',
@@ -145,6 +145,28 @@ CREATE TRIGGER set_proyek_updated_at
     EXECUTE FUNCTION trigger_set_updated_at();
 
 -- ============================================
+-- 5. Tabel Video Beranda
+-- Menyimpan video yang ditampilkan di section video halaman utama.
+-- Hanya satu video yang aktif (is_active = true) pada satu waktu.
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS video_beranda (
+    id          SERIAL PRIMARY KEY,
+    judul       VARCHAR(255),
+    deskripsi   TEXT,
+    video       VARCHAR(500) NOT NULL,
+    is_active   BOOLEAN      NOT NULL DEFAULT true,
+    created_by  INT REFERENCES admin(id) ON DELETE SET NULL,
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE TRIGGER set_video_beranda_updated_at
+    BEFORE UPDATE ON video_beranda
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_set_updated_at();
+
+-- ============================================
 -- Indexes untuk performa query
 -- ============================================
 
@@ -154,6 +176,7 @@ CREATE INDEX IF NOT EXISTS idx_kegiatan_created_at ON kegiatan(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_hero_beranda_urutan ON hero_beranda(urutan ASC);
 CREATE INDEX IF NOT EXISTS idx_proyek_kategori ON proyek(kategori);
 CREATE INDEX IF NOT EXISTS idx_proyek_created_at ON proyek(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_video_beranda_is_active ON video_beranda(is_active);
 
 -- ============================================
 -- Seed Data: Default Admin
@@ -166,7 +189,7 @@ CREATE INDEX IF NOT EXISTS idx_proyek_created_at ON proyek(created_at DESC);
 INSERT INTO admin (username, password, nama_lengkap, email, role)
 VALUES (
     'admin',
-    crypt('admin123', gen_salt('bf', 10)),
+    crypt('Yayasan-pemerhati', gen_salt('bf', 10)),
     'Administrator',
     'admin@rimbanusantara.com',
     'superadmin'

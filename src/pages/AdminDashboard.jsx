@@ -18,6 +18,8 @@ import {
   ChevronRight,
   Home,
   Briefcase,
+  Film,
+  CheckCircle,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
@@ -66,6 +68,17 @@ const AdminDashboard = () => {
   const [proyekFormLoading, setProyekFormLoading] = useState(false)
   const [proyekCurrentPage, setProyekCurrentPage] = useState(1)
   const PROYEK_PER_PAGE = 6
+
+  // Video Beranda state
+  const [videoList, setVideoList] = useState([])
+  const [videoLoading, setVideoLoading] = useState(true)
+  const [showVideoModal, setShowVideoModal] = useState(false)
+  const [editingVideo, setEditingVideo] = useState(null)
+  const [deleteVideoConfirm, setDeleteVideoConfirm] = useState(null)
+  const [videoFormData, setVideoFormData] = useState({ judul: '', deskripsi: '' })
+  const [videoFile, setVideoFile] = useState(null)
+  const [videoPreview, setVideoPreview] = useState(null)
+  const [videoFormLoading, setVideoFormLoading] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -304,6 +317,126 @@ const AdminDashboard = () => {
       }
     } catch {
       showMessage('Gagal menghapus proyek', 'error')
+    }
+  }
+
+  // ==================== VIDEO BERANDA HANDLERS ====================
+  const fetchVideoList = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/video-beranda/all`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setVideoList(Array.isArray(data) ? data : [])
+      }
+    } catch (err) {
+      console.error('Error fetching video list:', err)
+    } finally {
+      setVideoLoading(false)
+    }
+  }, [token])
+
+  useEffect(() => {
+    fetchVideoList()
+  }, [fetchVideoList])
+
+  const openCreateVideoModal = () => {
+    setEditingVideo(null)
+    setVideoFormData({ judul: '', deskripsi: '' })
+    setVideoFile(null)
+    setVideoPreview(null)
+    setShowVideoModal(true)
+  }
+
+  const openEditVideoModal = (item) => {
+    setEditingVideo(item)
+    setVideoFormData({
+      judul: item.judul || '',
+      deskripsi: item.deskripsi || '',
+    })
+    setVideoFile(null)
+    setVideoPreview(item.video ? getImageUrl(item.video) : null)
+    setShowVideoModal(true)
+  }
+
+  const handleVideoFileChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setVideoFile(file)
+      setVideoPreview(URL.createObjectURL(file))
+    }
+  }
+
+  const handleVideoSubmit = async (e) => {
+    e.preventDefault()
+    setVideoFormLoading(true)
+
+    try {
+      const data = new FormData()
+      data.append('judul', videoFormData.judul)
+      data.append('deskripsi', videoFormData.deskripsi)
+      if (videoFile) {
+        data.append('video', videoFile)
+      }
+
+      const url = editingVideo
+        ? `${API_URL}/video-beranda/${editingVideo.id}`
+        : `${API_URL}/video-beranda`
+
+      const res = await fetch(url, {
+        method: editingVideo ? 'PUT' : 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: data,
+      })
+
+      if (res.ok) {
+        showMessage(
+          editingVideo ? 'Video berhasil diperbarui!' : 'Video berhasil ditambahkan!'
+        )
+        setShowVideoModal(false)
+        fetchVideoList()
+      } else {
+        const errData = await res.json()
+        showMessage(errData.message || 'Terjadi kesalahan', 'error')
+      }
+    } catch {
+      showMessage('Gagal menyimpan video', 'error')
+    } finally {
+      setVideoFormLoading(false)
+    }
+  }
+
+  const handleActivateVideo = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/video-beranda/${id}/activate`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (res.ok) {
+        showMessage('Video berhasil diaktifkan!')
+        fetchVideoList()
+      }
+    } catch {
+      showMessage('Gagal mengaktifkan video', 'error')
+    }
+  }
+
+  const handleDeleteVideo = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/video-beranda/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (res.ok) {
+        showMessage('Video berhasil dihapus!')
+        setDeleteVideoConfirm(null)
+        fetchVideoList()
+      }
+    } catch {
+      showMessage('Gagal menghapus video', 'error')
     }
   }
 
@@ -567,6 +700,117 @@ const AdminDashboard = () => {
                       </button>
                       <button
                         onClick={() => setDeleteHeroConfirm(item.id)}
+                        className="flex-1 flex items-center justify-center space-x-1 py-2 bg-red-500/10 text-red-400 border border-red-500/30 rounded-xl hover:bg-red-500/20 transition-all text-sm font-medium"
+                      >
+                        <Trash2 size={14} />
+                        <span>Hapus</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-dark-200/50 mx-4 md:mx-0 mb-8"></div>
+
+        {/* ==================== VIDEO BERANDA SECTION ==================== */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6 md:mb-8 px-4 md:px-0">
+            <div>
+              <div className="flex items-center space-x-2 mb-1">
+                <Film size={20} className="text-primary" />
+                <h2 className="text-2xl font-bold text-text-heading">Video Beranda</h2>
+              </div>
+              <p className="text-text-body text-sm mt-1">
+                Kelola video yang tampil di section video halaman utama
+              </p>
+            </div>
+            <button
+              onClick={openCreateVideoModal}
+              className="flex items-center space-x-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 text-sm sm:text-base"
+            >
+              <Plus size={18} />
+              <span className="hidden sm:inline">Tambah Video</span>
+              <span className="sm:hidden">Tambah</span>
+            </button>
+          </div>
+
+          {videoLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            </div>
+          ) : videoList.length === 0 ? (
+            <div className="text-center py-12 px-4 bg-dark-50/80 rounded-none md:rounded-2xl border-b md:border border-dark-200/50 mx-0 md:mx-0">
+              <Film className="mx-auto text-text-muted mb-4" size={48} />
+              <p className="text-text-body text-lg">Belum ada video</p>
+              <p className="text-text-muted text-sm mt-1">
+                Klik &quot;Tambah Video&quot; untuk mengupload video baru
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-6">
+              {videoList.map((item) => (
+                <div
+                  key={item.id}
+                  className={`bg-dark-50/80 rounded-none md:rounded-2xl border-b md:border overflow-hidden group transition-all duration-300 ${
+                    item.is_active
+                      ? 'border-primary/50 md:border-primary/50'
+                      : 'border-dark-200/50 hover:border-primary/30'
+                  }`}
+                >
+                  <div className="relative h-52 sm:h-48 bg-dark-200/30">
+                    {item.video ? (
+                      <video
+                        src={getImageUrl(item.video)}
+                        className="w-full h-full object-cover"
+                        preload="metadata"
+                        muted
+                        playsInline
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Film className="text-text-muted" size={40} />
+                      </div>
+                    )}
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      {item.is_active && (
+                        <span className="px-3 py-1 bg-green-500/80 text-white text-xs font-medium rounded-full flex items-center gap-1">
+                          <CheckCircle size={12} />
+                          Aktif
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-4 md:p-5">
+                    <h3 className="text-lg font-bold text-text-heading mb-1 line-clamp-1">
+                      {item.judul || 'Tanpa judul'}
+                    </h3>
+                    {item.deskripsi && (
+                      <p className="text-text-body text-sm mb-3 line-clamp-2">{item.deskripsi}</p>
+                    )}
+                    <div className="flex space-x-2">
+                      {!item.is_active && (
+                        <button
+                          onClick={() => handleActivateVideo(item.id)}
+                          className="flex-1 flex items-center justify-center space-x-1 py-2 bg-green-500/10 text-green-400 border border-green-500/30 rounded-xl hover:bg-green-500/20 transition-all text-sm font-medium"
+                        >
+                          <CheckCircle size={14} />
+                          <span>Aktifkan</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => openEditVideoModal(item)}
+                        className="flex-1 flex items-center justify-center space-x-1 py-2 bg-primary/10 text-primary border border-primary/30 rounded-xl hover:bg-primary/20 transition-all text-sm font-medium"
+                      >
+                        <Edit3 size={14} />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        onClick={() => setDeleteVideoConfirm(item.id)}
                         className="flex-1 flex items-center justify-center space-x-1 py-2 bg-red-500/10 text-red-400 border border-red-500/30 rounded-xl hover:bg-red-500/20 transition-all text-sm font-medium"
                       >
                         <Trash2 size={14} />
@@ -1611,6 +1855,156 @@ const AdminDashboard = () => {
                 </button>
                 <button
                   onClick={() => handleDeleteHero(deleteHeroConfirm)}
+                  className="flex-1 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all font-semibold"
+                >
+                  Hapus
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== VIDEO BERANDA MODALS ==================== */}
+
+      {/* Video Create/Edit Modal */}
+      {showVideoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark/80 backdrop-blur-sm">
+          <div className="bg-dark-50 rounded-2xl border border-dark-200/50 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-dark-200/50">
+              <h3 className="text-lg font-bold text-text-heading">
+                {editingVideo ? 'Edit Video' : 'Tambah Video Baru'}
+              </h3>
+              <button
+                onClick={() => setShowVideoModal(false)}
+                className="p-2 text-text-muted hover:text-text-heading rounded-lg hover:bg-dark-200/30 transition-all"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleVideoSubmit} className="p-6 space-y-5">
+              {/* Judul */}
+              <div>
+                <label className="block text-sm font-medium text-text-heading mb-2">
+                  Judul (opsional)
+                </label>
+                <input
+                  type="text"
+                  value={videoFormData.judul}
+                  onChange={(e) => setVideoFormData({ ...videoFormData, judul: e.target.value })}
+                  className="w-full px-4 py-3 bg-dark/50 border border-dark-200/50 rounded-xl text-text-heading placeholder-text-muted focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                  placeholder="Judul video"
+                />
+              </div>
+
+              {/* Deskripsi */}
+              <div>
+                <label className="block text-sm font-medium text-text-heading mb-2">
+                  Deskripsi (opsional)
+                </label>
+                <textarea
+                  value={videoFormData.deskripsi}
+                  onChange={(e) => setVideoFormData({ ...videoFormData, deskripsi: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-3 bg-dark/50 border border-dark-200/50 rounded-xl text-text-heading placeholder-text-muted focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                  placeholder="Keterangan video..."
+                />
+              </div>
+
+              {/* Upload Video */}
+              <div>
+                <label className="block text-sm font-medium text-text-heading mb-2">
+                  File Video {!editingVideo && '*'}
+                </label>
+                <div className="border-2 border-dashed border-dark-200/50 rounded-xl p-4 text-center hover:border-primary/50 transition-all">
+                  {videoPreview ? (
+                    <div className="relative">
+                      <video
+                        src={videoPreview}
+                        className="w-full h-40 object-cover rounded-lg"
+                        preload="metadata"
+                        muted
+                        playsInline
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVideoFile(null)
+                          setVideoPreview(null)
+                        }}
+                        className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer block py-6">
+                      <Upload className="mx-auto text-text-muted mb-2" size={32} />
+                      <p className="text-text-body text-sm">Klik untuk upload video</p>
+                      <p className="text-text-muted text-xs mt-1">
+                        MP4, WebM, OGG, MOV (max 100MB)
+                      </p>
+                      <input
+                        type="file"
+                        accept="video/mp4,video/webm,video/ogg,video/quicktime"
+                        onChange={handleVideoFileChange}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Submit */}
+              <div className="flex space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowVideoModal(false)}
+                  className="flex-1 py-3 px-6 border border-dark-200/50 text-text-body rounded-xl hover:bg-dark-200/20 transition-all font-medium"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={videoFormLoading || (!editingVideo && !videoFile)}
+                  className="flex-1 py-3 px-6 bg-gradient-to-r from-primary to-secondary text-white rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all font-semibold disabled:opacity-50 flex items-center justify-center"
+                >
+                  {videoFormLoading ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : editingVideo ? (
+                    'Simpan Perubahan'
+                  ) : (
+                    'Tambah Video'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Video Delete Confirmation Modal */}
+      {deleteVideoConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark/80 backdrop-blur-sm">
+          <div className="bg-dark-50 rounded-2xl border border-dark-200/50 p-6 w-full max-w-sm">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-14 h-14 bg-red-500/10 rounded-2xl mb-4">
+                <AlertCircle className="text-red-400" size={28} />
+              </div>
+              <h3 className="text-lg font-bold text-text-heading mb-2">Hapus Video?</h3>
+              <p className="text-text-body text-sm mb-6">
+                Video yang dihapus tidak dapat dikembalikan.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setDeleteVideoConfirm(null)}
+                  className="flex-1 py-3 border border-dark-200/50 text-text-body rounded-xl hover:bg-dark-200/20 transition-all font-medium"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={() => handleDeleteVideo(deleteVideoConfirm)}
                   className="flex-1 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all font-semibold"
                 >
                   Hapus

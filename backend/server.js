@@ -102,7 +102,7 @@ pool.on('error', (err) => {
 })
 
 // Buat subfolder uploads per kategori
-const kategoriDirs = ['kegiatan', 'sia', 'sroi', 'beranda']
+const kategoriDirs = ['kegiatan', 'sia', 'sroi', 'beranda', 'video']
 kategoriDirs.forEach((dir) => {
   const dirPath = path.join(uploadsDir, dir)
   if (!fs.existsSync(dirPath)) {
@@ -674,6 +674,175 @@ app.delete('/api/proyek/:id', authMiddleware, async (req, res) => {
     res.json({ message: 'Proyek berhasil dihapus' })
   } catch (error) {
     console.error('Delete proyek error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// ==================== VIDEO BERANDA ====================
+
+// Multer config khusus untuk video beranda (ukuran lebih besar, format video)
+const videoStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const destDir = path.join(uploadsDir, 'video')
+    if (!fs.existsSync(destDir)) {
+      fs.mkdirSync(destDir, { recursive: true })
+    }
+    cb(null, destDir)
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9)
+    cb(null, 'video-' + uniqueSuffix + path.extname(file.originalname))
+  },
+})
+
+const uploadVideo = multer({
+  storage: videoStorage,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB untuk video
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /mp4|webm|ogg|mov/
+    const allowedMimes = /video\/(mp4|webm|ogg|quicktime)/
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase())
+    const mimetype = allowedMimes.test(file.mimetype)
+    if (extname && mimetype) {
+      cb(null, true)
+    } else {
+      cb(new Error('Hanya file video (MP4, WebM, OGG, MOV) yang diizinkan!'))
+    }
+  },
+})
+
+// Get active video (public)
+app.get('/api/video-beranda', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM video_beranda WHERE is_active = true ORDER BY created_at DESC LIMIT 1'
+    )
+    res.json(rows[0] || null)
+  } catch (error) {
+    console.error('Get video beranda error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// Get all videos (admin)
+app.get('/api/video-beranda/all', authMiddleware, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM video_beranda ORDER BY created_at DESC'
+    )
+    res.json(rows)
+  } catch (error) {
+    console.error('Get all video beranda error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// Create video (admin only)
+app.post('/api/video-beranda', authMiddleware, uploadVideo.single('video'), async (req, res) => {
+  try {
+    const { judul, deskripsi } = req.body
+    const video = req.file ? `/uploads/video/${req.file.filename}` : null
+
+    if (!video) {
+      return res.status(400).json({ message: 'File video wajib diupload' })
+    }
+
+    // Nonaktifkan semua video lain agar hanya satu yang aktif
+    await pool.query('UPDATE video_beranda SET is_active = false')
+
+    const { rows: inserted } = await pool.query(
+      'INSERT INTO video_beranda (judul, deskripsi, video, is_active, created_by) VALUES ($1, $2, $3, true, $4) RETURNING id',
+      [judul || null, deskripsi || null, video, req.admin.id]
+    )
+
+    res.status(201).json({
+      message: 'Video berhasil ditambahkan',
+      id: inserted[0].id,
+    })
+  } catch (error) {
+    console.error('Create video beranda error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// Update video (admin only)
+app.put('/api/video-beranda/:id', authMiddleware, uploadVideo.single('video'), async (req, res) => {
+  try {
+    const { judul, deskripsi } = req.body
+    const id = req.params.id
+
+    const { rows: existing } = await pool.query('SELECT * FROM video_beranda WHERE id = $1', [id])
+    if (existing.length === 0) {
+      return res.status(404).json({ message: 'Video tidak ditemukan' })
+    }
+
+    let video = existing[0].video
+    if (req.file) {
+      // Hapus video lama
+      if (video) {
+        const oldPath = path.join(__dirname, video)
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath)
+        }
+      }
+      video = `/uploads/video/${req.file.filename}`
+    }
+
+    await pool.query(
+      'UPDATE video_beranda SET judul = $1, deskripsi = $2, video = $3 WHERE id = $4',
+      [judul || null, deskripsi || null, video, id]
+    )
+
+    res.json({ message: 'Video berhasil diperbarui' })
+  } catch (error) {
+    console.error('Update video beranda error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// Set active video (admin only)
+app.put('/api/video-beranda/:id/activate', authMiddleware, async (req, res) => {
+  try {
+    const id = req.params.id
+
+    const { rows: existing } = await pool.query('SELECT * FROM video_beranda WHERE id = $1', [id])
+    if (existing.length === 0) {
+      return res.status(404).json({ message: 'Video tidak ditemukan' })
+    }
+
+    // Nonaktifkan semua, lalu aktifkan yang dipilih
+    await pool.query('UPDATE video_beranda SET is_active = false')
+    await pool.query('UPDATE video_beranda SET is_active = true WHERE id = $1', [id])
+
+    res.json({ message: 'Video berhasil diaktifkan' })
+  } catch (error) {
+    console.error('Activate video beranda error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// Delete video (admin only)
+app.delete('/api/video-beranda/:id', authMiddleware, async (req, res) => {
+  try {
+    const { rows: existing } = await pool.query('SELECT * FROM video_beranda WHERE id = $1', [
+      req.params.id,
+    ])
+    if (existing.length === 0) {
+      return res.status(404).json({ message: 'Video tidak ditemukan' })
+    }
+
+    // Hapus file video
+    if (existing[0].video) {
+      const videoPath = path.join(__dirname, existing[0].video)
+      if (fs.existsSync(videoPath)) {
+        fs.unlinkSync(videoPath)
+      }
+    }
+
+    await pool.query('DELETE FROM video_beranda WHERE id = $1', [req.params.id])
+    res.json({ message: 'Video berhasil dihapus' })
+  } catch (error) {
+    console.error('Delete video beranda error:', error)
     res.status(500).json({ message: 'Server error' })
   }
 })

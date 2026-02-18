@@ -2,14 +2,38 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Play, X } from 'lucide-react'
 import { useLanguage } from '../../hooks/useLanguage'
+import { API_URL, getImageUrl } from '../../config/api'
 import { fadeInUp, defaultViewport, backdropVariant, modalVariant } from '../../utils/animations'
-
-const VIDEO_SRC = '/assets/Pelaksanaan_Konsultasi.mp4'
 
 const VideoSection = () => {
   const { t } = useLanguage()
   const [isOpen, setIsOpen] = useState(false)
+  const [videoData, setVideoData] = useState(null)
+  const [loading, setLoading] = useState(true)
   const videoRef = useRef(null)
+
+  // Fetch video aktif dari API
+  useEffect(() => {
+    const fetchVideo = async () => {
+      try {
+        const res = await fetch(`${API_URL}/video-beranda`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data && data.video) {
+            setVideoData(data)
+          }
+        }
+      } catch {
+        // Gagal fetch — section tidak ditampilkan
+        console.error('Gagal memuat video beranda')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchVideo()
+  }, [])
+
+  const videoSrc = videoData ? getImageUrl(videoData.video) : null
 
   const openModal = useCallback(() => {
     setIsOpen(true)
@@ -45,6 +69,9 @@ const VideoSection = () => {
     if (isOpen) window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [isOpen, closeModal])
+
+  // Jangan render section jika loading atau tidak ada video
+  if (loading || !videoSrc) return null
 
   return (
     <>
@@ -90,7 +117,7 @@ const VideoSection = () => {
               {/* Thumbnail dari frame pertama video -- preload metadata saja */}
               <video
                 className="w-full h-full object-cover"
-                src={VIDEO_SRC}
+                src={videoSrc}
                 preload="metadata"
                 muted
                 playsInline
@@ -111,7 +138,7 @@ const VideoSection = () => {
               {/* Caption bar */}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-dark/80 to-transparent p-6">
                 <p className="text-text-heading font-medium text-lg">
-                  {t('homeVideo.caption')}
+                  {videoData.judul || t('homeVideo.caption')}
                 </p>
               </div>
             </button>
@@ -152,7 +179,7 @@ const VideoSection = () => {
                 <video
                   ref={videoRef}
                   className="w-full aspect-video"
-                  src={VIDEO_SRC}
+                  src={videoSrc}
                   controls
                   autoPlay
                   preload="auto"
