@@ -44,6 +44,7 @@ const ImageSlider = ({ images }) => {
             key={index}
             src={img.src}
             alt={img.alt}
+            loading="lazy"
             className={`w-full transition-all duration-700 ease-in-out ${
               index === current
                 ? 'relative opacity-100 scale-100'
@@ -149,8 +150,8 @@ const SocialReturnOnInvestment = () => {
   }
 
   const heroImages = [
-    { src: '/assets/images/SROI/SROI.jpg', alt: 'Social Return on Investment' },
-    { src: '/assets/images/SROI/SROI 1.jpg', alt: 'Kegiatan SROI' },
+    { src: '/assets/images/SROI/SROI.webp', alt: 'Social Return on Investment' },
+    { src: '/assets/images/SROI/SROI 1.webp', alt: 'Kegiatan SROI' },
   ]
 
   const stageIcons = [BarChart3, TrendingUp, DollarSign, PieChart]

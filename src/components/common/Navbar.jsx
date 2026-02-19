@@ -83,11 +83,16 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
-            <img
-              src="../kegiatan.jpg"
-              alt="Logo Rimba Nusantara"
-              className="h-10 md:h-12 w-auto object-contain"
-            />
+            <picture>
+              <source srcSet="/kegiatan.webp" type="image/webp" />
+              <img
+                src="/kegiatan-small.jpg"
+                alt="Logo Rimba Nusantara"
+                className="h-10 md:h-12 w-auto object-contain"
+                width="48"
+                height="48"
+              />
+            </picture>
           </Link>
 
           {/* Desktop Navigation */}

@@ -31,6 +31,7 @@ const HeroImageSlider = ({ images }) => {
         src={images[0].src}
         alt={images[0].alt}
         className="w-full h-full object-cover"
+        fetchPriority="high"
       />
     )
   }
@@ -42,6 +43,8 @@ const HeroImageSlider = ({ images }) => {
           key={index}
           src={img.src}
           alt={img.alt}
+          loading={index === 0 ? 'eager' : 'lazy'}
+          fetchPriority={index === 0 ? 'high' : 'auto'}
           className={`w-full h-full object-cover transition-all duration-700 ease-in-out ${
             index === current
               ? 'relative opacity-100 scale-100'
@@ -101,7 +104,7 @@ const Hero = () => {
       } catch {
         // Fallback ke static image jika API error
         setHeroImages([
-          { src: '/assets/images/Beranda/beranda1.jpg', alt: 'Kegiatan Yayasan' },
+          { src: '/assets/images/Beranda/beranda1.webp', alt: 'Kegiatan Yayasan' },
         ])
       } finally {
         setLoading(false)
@@ -112,7 +115,7 @@ const Hero = () => {
 
   // Fallback image saat loading atau kosong
   const fallbackImages = [
-    { src: '/assets/images/Beranda/beranda1.jpg', alt: 'Kegiatan Yayasan' },
+    { src: '/assets/images/Beranda/beranda1.webp', alt: 'Kegiatan Yayasan' },
   ]
   const displayImages = heroImages.length > 0 ? heroImages : fallbackImages
 
@@ -122,7 +125,7 @@ const Hero = () => {
       <div
         className="absolute inset-0 opacity-[0.35] pointer-events-none"
         style={{
-          backgroundImage: "url('/assets/images/Layout/layout.png')",
+          backgroundImage: "url('/assets/images/Layout/layout.webp')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',

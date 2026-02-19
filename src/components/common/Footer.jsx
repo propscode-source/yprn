@@ -35,11 +35,17 @@ const Footer = () => {
           {/* Company Info */}
           <motion.div variants={staggerItem} className="space-y-6">
             <div className="flex items-center space-x-3">
-              <img
-                src="/kegiatan.jpg"
-                alt="Logo Yayasan"
-                className="h-10 w-auto object-contain"
-              />
+              <picture>
+                <source srcSet="/kegiatan.webp" type="image/webp" />
+                <img
+                  src="/kegiatan-small.jpg"
+                  alt="Logo Yayasan"
+                  className="h-10 w-auto object-contain"
+                  loading="lazy"
+                  width="40"
+                  height="40"
+                />
+              </picture>
             </div>
             <p className="text-text-body leading-relaxed">{companyInfo.tagline}</p>
           </motion.div>

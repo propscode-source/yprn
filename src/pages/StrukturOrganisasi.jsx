@@ -19,6 +19,7 @@ const PersonCard = ({ member, size = 'md', t }) => {
             src={member.image}
             alt={t(member.roleKey)}
             className={`relative ${sizeClass} rounded-full object-cover border-2 border-primary/30`}
+            loading="lazy"
           />
         </div>
         <div>
@@ -37,31 +38,31 @@ const StrukturOrganisasi = () => {
     {
       name: 'Yuliusman, S.H, M.H ',
       roleKey: 'struktur.pembina',
-      image: '/assets/images/Struktur/pembina.jpg',
+      image: '/assets/images/Struktur/pembina.webp',
     },
     {
       name: 'Dr. Syafrul Yunardy, S.Hut., M.E',
       roleKey: 'struktur.pengawas',
-      image: '/assets/images/Struktur/pengawas.jpg',
+      image: '/assets/images/Struktur/pengawas.webp',
     },
   ]
 
   const ketua = {
     name: 'Dr. M Subardin, S.E., M.Si',
     roleKey: 'struktur.ketua',
-    image: '/assets/images/Struktur/ketua.jpg',
+    image: '/assets/images/Struktur/ketua.webp',
   }
 
   const bawah = [
     {
       name: 'Dr. Imam Asngari S.E., M.Si',
       roleKey: 'struktur.sekretaris',
-      image: '/assets/images/Struktur/sekretaris.jpg',
+      image: '/assets/images/Struktur/sekretaris.webp',
     },
     {
       name: 'Mega Debiyanti S.E',
       roleKey: 'struktur.bendahara',
-      image: '/assets/images/Struktur/bendahara.jpg',
+      image: '/assets/images/Struktur/bendahara.webp',
     },
   ]
 

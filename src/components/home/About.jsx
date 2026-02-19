@@ -32,9 +32,10 @@ const About = () => {
               {/* Glow effect */}
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl blur-2xl"></div>
               <img
-                src="/assets/images/Beranda/beranda2.jpg"
+                src="/assets/images/Beranda/beranda2.webp"
                 alt="Kegiatan Yayasan"
                 className="relative rounded-2xl shadow-xl w-full object-cover border border-dark-200"
+                loading="lazy"
               />
               <div className="absolute -bottom-8 -right-8 w-48 h-48 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center text-dark shadow-glow-primary">
                 <div className="text-center">

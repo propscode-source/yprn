@@ -52,12 +52,26 @@ app.use(
 )
 app.use(express.json())
 
-// Serve uploaded files
+// Serve uploaded files dengan cache headers
 const uploadsDir = path.join(__dirname, 'uploads')
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true })
 }
-app.use('/uploads', express.static(uploadsDir))
+app.use('/uploads', express.static(uploadsDir, {
+  maxAge: '30d',           // Cache gambar selama 30 hari
+  immutable: true,         // File tidak akan berubah (content-hashed)
+  etag: true,              // Enable ETag untuk validasi cache
+  lastModified: true,      // Enable Last-Modified header
+}))
+
+// Cache middleware untuk public API GET routes
+// Data seperti hero, kegiatan, proyek jarang berubah -- cache 5 menit
+const cachePublicApi = (duration = 300) => (req, res, next) => {
+  if (req.method === 'GET') {
+    res.set('Cache-Control', `public, max-age=${duration}, stale-while-revalidate=${duration * 2}`)
+  }
+  next()
+}
 
 // PostgreSQL Connection Pool (Supabase)
 // Pool dikonfigurasi untuk performa koneksi <1ms pada request berikutnya
@@ -316,7 +330,7 @@ const uploadHero = multer({
 // ==================== HERO BERANDA ROUTES ====================
 
 // Get all hero images (public)
-app.get('/api/hero-beranda', async (req, res) => {
+app.get('/api/hero-beranda', cachePublicApi(300), async (req, res) => {
   try {
     const { rows } = await pool.query(
       'SELECT * FROM hero_beranda ORDER BY urutan ASC, created_at DESC'
@@ -417,7 +431,7 @@ app.delete('/api/hero-beranda/:id', authMiddleware, async (req, res) => {
 // ==================== KEGIATAN ROUTES ====================
 
 // Get all kegiatan (public)
-app.get('/api/kegiatan', async (req, res) => {
+app.get('/api/kegiatan', cachePublicApi(300), async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM kegiatan ORDER BY created_at DESC')
     res.json(rows)
@@ -568,7 +582,7 @@ const uploadProyek = multer({
 // ==================== PROYEK ROUTES ====================
 
 // Get all proyek (public) — optional filter by kategori
-app.get('/api/proyek', async (req, res) => {
+app.get('/api/proyek', cachePublicApi(300), async (req, res) => {
   try {
     const { kategori } = req.query
     let query = 'SELECT * FROM proyek'
@@ -758,7 +772,7 @@ const uploadVideo = multer({
 })
 
 // Get active video (public)
-app.get('/api/video-beranda', async (req, res) => {
+app.get('/api/video-beranda', cachePublicApi(300), async (req, res) => {
   try {
     const { rows } = await pool.query(
       'SELECT * FROM video_beranda WHERE is_active = true ORDER BY created_at DESC LIMIT 1'

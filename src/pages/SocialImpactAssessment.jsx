@@ -40,6 +40,7 @@ const ImageSlider = ({ images }) => {
             key={index}
             src={img.src}
             alt={img.alt}
+            loading="lazy"
             className={`w-full transition-all duration-700 ease-in-out ${
               index === current
                 ? 'relative opacity-100 scale-100'
@@ -145,8 +146,8 @@ const SocialImpactAssessment = () => {
   }
 
   const heroImages = [
-    { src: '/assets/images/SIA/SIA.jpg', alt: 'Social Impact Assessment' },
-    { src: '/assets/images/SIA/SIA 1.jpg', alt: 'Kegiatan SIA' },
+    { src: '/assets/images/SIA/SIA.webp', alt: 'Social Impact Assessment' },
+    { src: '/assets/images/SIA/SIA 1.webp', alt: 'Kegiatan SIA' },
   ]
 
   const steps = t('siaPage.steps')

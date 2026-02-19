@@ -152,9 +152,10 @@ const VisiMisi = () => {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl blur-2xl"></div>
               <img
-                src="/assets/images/Beranda/beranda2.jpg"
+                src="/assets/images/Beranda/beranda2.webp"
                 alt="Kegiatan Yayasan Rimba Nusantara"
                 className="relative rounded-2xl shadow-2xl w-full border border-dark-200"
+                loading="lazy"
               />
             </motion.div>
             <motion.div
