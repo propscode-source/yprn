@@ -14,7 +14,7 @@ Two independent npm projects share one repo: a React frontend (root) and an Expr
 | Language  | JavaScript only (JSX) -- no TypeScript           |
 | Package   | npm (no monorepo tooling)                        |
 
-## Build / Lint / Dev Commands
+## Build / Dev Commands
 
 ### Frontend (run from repo root)
 
@@ -22,7 +22,6 @@ Two independent npm projects share one repo: a React frontend (root) and an Expr
 npm install          # Install dependencies
 npm run dev          # Start Vite dev server
 npm run build        # Production build (outputs to dist/)
-npm run lint         # ESLint check: eslint .
 npm run preview      # Preview production build locally
 ```
 
@@ -190,10 +189,7 @@ app.post('/api/resource', async (req, res) => {
 - Decorative section banners in server.js: `// ==================== SECTION ====================`
 - Comments may be in Indonesian or English (codebase is bilingual)
 
-### ESLint Configuration
+### Linting
 
-Flat config (`eslint.config.js`) with:
-- `js.configs.recommended` + React/hooks/refresh plugins
-- `no-unused-vars`: error (ignores PascalCase/UPPER_CASE vars via `varsIgnorePattern: '^[A-Z_]'`)
-- ECMAScript 2020, source type `module`
-- React version auto-detected
+There is **no linter** configured. ESLint was previously used but removed due to unresolvable
+transitive dependency vulnerabilities. If re-adding, use ESLint 10+ with flat config.
