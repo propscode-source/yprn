@@ -237,6 +237,52 @@ app.get('/api/verify', authMiddleware, (req, res) => {
   res.json({ valid: true, admin: req.admin })
 })
 
+// Reset password (lupa password)
+app.post('/api/forgot-password', async (req, res) => {
+  try {
+    const { username, email, newPassword, confirmPassword } = req.body
+
+    // Validasi input
+    if (!username || !email || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: 'Semua field harus diisi' })
+    }
+
+    // Validasi panjang password minimal 6 karakter
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password baru minimal 6 karakter' })
+    }
+
+    // Validasi konfirmasi password
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: 'Konfirmasi password tidak cocok' })
+    }
+
+    // Cari admin berdasarkan username DAN email (parameterized query untuk hindari SQL injection)
+    const { rows } = await pool.query(
+      'SELECT id, username, email FROM admin WHERE username = $1 AND email = $2',
+      [username, email]
+    )
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Username atau email tidak ditemukan' })
+    }
+
+    // Hash password baru dengan bcrypt
+    const hashedPassword = await bcrypt.hash(newPassword, 12)
+
+    // Update password di database (parameterized query)
+    await pool.query(
+      'UPDATE admin SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [hashedPassword, rows[0].id]
+    )
+
+    res.json({ message: 'Password berhasil direset' })
+  } catch (error) {
+    console.error('Forgot password error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
 // Multer config khusus untuk hero beranda
 const heroStorage = multer.diskStorage({
   destination: (req, file, cb) => {
