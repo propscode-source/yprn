@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback } from 'react'
 import {
-  Camera,
   ArrowRight,
+  Calendar,
+  Camera,
+  CheckCircle,
   ChevronLeft,
   ChevronRight,
-  X,
-  Calendar,
-  MapPin,
   Image as ImageIcon,
-  CheckCircle,
+  MapPin,
+  X,
 } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { API_URL, getImageUrl } from '../config/api'
 import { useLanguage } from '../hooks/useLanguage'
@@ -34,19 +34,16 @@ const ImageSlider = ({ images }) => {
 
   return (
     <div className="relative group rounded-2xl overflow-hidden border border-dark-200 bg-dark-100">
-      <div className="relative w-full overflow-hidden">
+      <div className="relative w-full overflow-hidden" style={{ aspectRatio: '1131 / 1600' }}>
         {images.map((img, index) => (
           <img
             key={index}
             src={img.src}
             alt={img.alt}
             loading="lazy"
-            className={`w-full transition-all duration-700 ease-in-out ${
-              index === current
-                ? 'relative opacity-100 scale-100'
-                : 'absolute inset-0 opacity-0 scale-105'
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out ${
+              index === current ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
             }`}
-            style={{ display: index === current ? 'block' : 'none' }}
           />
         ))}
       </div>

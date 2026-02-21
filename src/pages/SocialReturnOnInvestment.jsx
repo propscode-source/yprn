@@ -1,19 +1,19 @@
-import { useState, useEffect, useCallback } from 'react'
 import {
-  TrendingUp,
-  DollarSign,
-  BarChart3,
-  PieChart,
-  Camera,
   ArrowRight,
+  BarChart3,
+  Calendar,
+  Camera,
   CheckCircle,
   ChevronLeft,
   ChevronRight,
-  X,
-  Calendar,
-  MapPin,
+  DollarSign,
   Image as ImageIcon,
+  MapPin,
+  PieChart,
+  TrendingUp,
+  X,
 } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../hooks/useLanguage'
 
@@ -38,19 +38,16 @@ const ImageSlider = ({ images }) => {
 
   return (
     <div className="relative group rounded-2xl overflow-hidden border border-dark-200 bg-dark-100">
-      <div className="relative w-full overflow-hidden">
+      <div className="relative w-full overflow-hidden" style={{ aspectRatio: '1060 / 1500' }}>
         {images.map((img, index) => (
           <img
             key={index}
             src={img.src}
             alt={img.alt}
             loading="lazy"
-            className={`w-full transition-all duration-700 ease-in-out ${
-              index === current
-                ? 'relative opacity-100 scale-100'
-                : 'absolute inset-0 opacity-0 scale-105'
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out ${
+              index === current ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
             }`}
-            style={{ display: index === current ? 'block' : 'none' }}
           />
         ))}
       </div>
@@ -261,23 +258,23 @@ const SocialReturnOnInvestment = () => {
                 <div
                   key={project.id}
                   onClick={() => setSelectedProject(project)}
-                  className="card-glow overflow-hidden card-lift group cursor-pointer"
+                  className="card-glow overflow-hidden card-lift group cursor-pointer flex flex-col"
                 >
-                  <div className="relative overflow-hidden">
+                  <div className="relative overflow-hidden bg-dark-100">
                     {project.gambar ? (
                       <img
                         src={getImageUrl(project.gambar)}
                         alt={project.judul}
-                        className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
                       <div className="w-full h-48 bg-dark-200/30 flex items-center justify-center">
                         <BarChart3 className="text-text-muted" size={48} />
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-dark to-transparent opacity-60"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-dark to-transparent opacity-60 pointer-events-none"></div>
                   </div>
-                  <div className="p-6">
+                  <div className="p-6 flex-1 flex flex-col">
                     {Array.isArray(project.tags) && project.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-3">
                         {project.tags.map((tag, i) => (
